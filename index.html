@@ -28,20 +28,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
-      .phone-container {
-            width: 100vw;
-            height: 100vh;
-            max-width: 100%;
-            max-height: 100vh;
-            margin: 0;
-            border-radius: 0;
-            box-shadow: none;
+        .phone-container {
+            max-width: 420px;
+            height: 850px;
+            margin: 20px auto;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            border: none;
+            border: 8px solid #1e293b;
             position: relative;
         }
+        /* Ajuste absoluto para que el mapa ocupe el 100% de la pantalla del celular */
+        #view-map { position: absolute; inset: 0; width: 100%; height: 100%; }
         #map { width: 100%; height: 100%; z-index: 10; touch-action: pan-x pan-y; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -95,21 +95,16 @@
                 <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
             </div>
 
-            <!-- Pestañas de Navegación del Panel -->
             <div class="flex gap-2 border-b pb-2 text-xs">
                 <button onclick="switchAdminTab('users')" id="tab-users-btn" class="px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition">Gestionar Accesos</button>
                 <button onclick="switchAdminTab('profile')" id="tab-profile-btn" class="px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition">Mis Datos</button>
             </div>
 
-            <!-- SECCIÓN 1: GESTIÓN DE USUARIOS -->
             <div id="section-users" class="flex-1 overflow-y-auto space-y-2 py-1">
                 <p class="text-xs text-slate-500 mb-2">Valida o elimina las cuentas que solicitan acceso:</p>
-                <div id="admin-users-list" class="space-y-2 border rounded-xl p-3 bg-slate-50 text-sm max-h-48 overflow-y-auto">
-                    <!-- Se carga dinámicamente -->
-                </div>
+                <div id="admin-users-list" class="space-y-2 border rounded-xl p-3 bg-slate-50 text-sm max-h-48 overflow-y-auto"></div>
             </div>
 
-            <!-- SECCIÓN 2: MIS DATOS -->
             <div id="section-profile" class="hidden flex-1 space-y-3 py-1">
                 <p class="text-xs text-slate-500">Tus datos como Administrador:</p>
                 <div class="bg-slate-50 p-3 rounded-xl border space-y-2 text-xs">
@@ -125,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- PIE DE PAGINA CON CERRAR SESIÓN -->
             <div class="pt-3 border-t flex justify-between items-center">
                 <button onclick="clearActiveSession()" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-xl font-semibold hover:bg-red-100 transition flex items-center gap-1">
                     <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
@@ -186,7 +180,6 @@
                         oninput="filterDirectory()">
                 </div>
 
-                <!-- FILTROS DE ZONA -->
                 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs">
                     <button onclick="filterByZone('all')" id="btn-zone-all" class="px-3 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-sm transition-colors">Todas</button>
                     <button onclick="filterByZone('Beach & Yacht Club')" id="btn-zone-beach" class="px-3 py-1.5 rounded-full font-medium bg-white text-slate-600 border border-slate-200 shrink-0 shadow-sm transition-colors">Beach & Yacht Club</button>
@@ -199,7 +192,7 @@
             </div>
 
             <!-- VISTA 2: MAPA INTERACTIVO -->
-            <div id="view-map" class="hidden flex-1 w-full h-full relative">
+            <div id="view-map" class="hidden">
                 <div id="map"></div>
             </div>
 
@@ -324,18 +317,20 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // URLs de Google Sheets (incluyendo el nuevo link de origen de usuarios en formato CSV exportado)
         const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
         const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
+        const SHEET_ORIGIN_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1281819744";
 
         let membersList = [];
+        let originDictionary = {};
         let leafletMap = null;
         let mapMarkersMap = {};
         let currentZoneFilter = 'all';
         let currentLogCat = 'Paquetería';
         let isDarkMode = false;
 
-        // --- SISTEMA DE AUTENTICACIÓN Y ADMINISTRACIÓN ---
-        const MASTER_ADMIN = "xasharitl"; // Tu usuario fijo único
+        const MASTER_ADMIN = "xasharitl";
         let isRegistering = false;
 
         function toggleMode() {
@@ -371,15 +366,11 @@
                 toggleMode();
             } else {
                 if (user === MASTER_ADMIN) {
-                    const savedData = localStorage.getItem('app_user_' + user);
-                    if (!savedData) {
-                        localStorage.setItem('app_user_' + user, JSON.stringify({ pass: pass, approved: true }));
-                    } else {
-                        const parsed = JSON.parse(savedData);
-                        if (parsed.pass !== pass) {
-                            alert('Contraseña de administrador incorrecta.');
-                            return;
-                        }
+                    localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
+
+                    if (pass !== "Sax_1995") {
+                        alert('Contraseña de administrador incorrecta.');
+                        return;
                     }
 
                     localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
@@ -437,7 +428,6 @@
             }
         }
 
-        // --- PANEL DE ADMINISTRACIÓN Y PERFIL ---
         function toggleAdminPanel() {
             const activeSession = JSON.parse(localStorage.getItem('app_session') || '{}');
 
@@ -445,7 +435,7 @@
                 const inputAdminPass = prompt("Esta sección es exclusiva para el administrador. Ingresa tu contraseña:");
                 const adminData = JSON.parse(localStorage.getItem('app_user_' + MASTER_ADMIN) || '{}');
                 
-                if (!inputAdminPass || inputAdminPass !== adminData.pass) {
+                if (!inputAdminPass || inputAdminPass !== (adminData.pass || "Sax_1995")) {
                     alert('Acceso denegado.');
                     return;
                 }
@@ -556,7 +546,6 @@
             }
         }
 
-        // --- FUNCIONES DE LA APP ---
         function cleanKey(str) {
             if (!str) return "";
             return str.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -566,6 +555,7 @@
             try {
                 let coordsDictionary = {};
 
+                // 1. Cargar coordenadas complementarias
                 try {
                     const resCoords = await fetch(SHEET_COORD_URL);
                     if (resCoords.ok) {
@@ -576,6 +566,18 @@
                     console.warn("Advertencia al cargar coordenadas complementarias.");
                 }
 
+                // 2. Cargar origen de usuarios (Nuevo enlace integrado)
+                try {
+                    const resOrigin = await fetch(SHEET_ORIGIN_URL);
+                    if (resOrigin.ok) {
+                        const textOrigin = await resOrigin.text();
+                        originDictionary = parseOriginCSV(textOrigin);
+                    }
+                } catch(e) {
+                    console.warn("Advertencia al cargar la hoja de origen de usuarios.");
+                }
+
+                // 3. Cargar la lista principal de miembros
                 const resMembers = await fetch(SHEET_MEMBERS_URL);
                 if (!resMembers.ok) throw new Error("Error en respuesta de red");
 
@@ -593,6 +595,24 @@
                 const syncEl = document.getElementById('syncStatus');
                 if (syncEl) syncEl.innerText = `Error de conexión`;
             }
+        }
+
+        function parseOriginCSV(text) {
+            const lines = text.split("\n");
+            const originMap = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = parseCSVLine(lines[i]);
+                const rawName = cols[0] || ""; // Ajusta según la columna donde venga el nombre/identificador en tu nueva hoja
+                const originVal = cols[1] || ""; // Ajusta según la columna de origen
+                const key = cleanKey(rawName);
+
+                if (key) {
+                    originMap[key] = originVal;
+                }
+            }
+            return originMap;
         }
 
         function parseCoordsCSV(text) {
@@ -666,9 +686,13 @@
                         }
                     }
 
+                    const memberName = cols[1];
+                    const memberKey = cleanKey(memberName);
+                    const userOrigin = originDictionary[memberKey] || "N/D"; // Origen leído de la nueva hoja
+
                     membersList.push({
                         id: cols[0] || i,
-                        name: cols[1],
+                        name: memberName,
                         zone: cols[2] || "Beach & Yacht Club",
                         villa: rawVilla || "N/D",
                         photo: cols[4] && cols[4].startsWith('http') ? cols[4] : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -676,7 +700,8 @@
                         lng: lngVal,
                         transport: cols[7] || "Sin preferencias especiales de transporte.", 
                         bellman: cols[8] || "Sin notas específicas para bellman.",          
-                        phone: cols[9] || "N/A"                                            
+                        phone: cols[9] || "N/A",
+                        origin: userOrigin // Propiedad integrada del origen
                     });
                 }
             }
@@ -792,6 +817,7 @@
 
             setTimeout(() => {
                 if (leafletMap) {
+                    leafletMap.invalidateSize();
                     leafletMap.setView([member.lat, member.lng], 18);
                     if (mapMarkersMap[member.id]) {
                         mapMarkersMap[member.id].openPopup();
@@ -1003,6 +1029,10 @@
 
             L.control.layers(baseLayers).addTo(leafletMap);
             updateMapMarkers(membersList);
+            
+            setTimeout(() => {
+                leafletMap.invalidateSize();
+            }, 200);
         }
 
         function updateMapMarkers(list) {
@@ -1013,7 +1043,7 @@
 
             list.forEach(member => {
                 const marker = L.marker([member.lat, member.lng]).addTo(leafletMap);
-                marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>${member.zone}`);
+                marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>Origen: ${member.origin}<br>${member.zone}`);
                 marker.on('click', () => openModal(member));
                 mapMarkersMap[member.id] = marker;
             });
@@ -1033,7 +1063,7 @@
 
             if(img) img.src = member.photo;
             if(name) name.innerText = member.name;
-            if(villa) villa.innerText = "Villa: " + member.villa;
+            if(villa) villa.innerText = "Villa: " + member.villa + " | Origen: " + member.origin;
             if(zone) zone.innerText = member.zone;
             if(transport) transport.innerText = member.transport;
             if(bellman) bellman.innerText = member.bellman;
@@ -1070,22 +1100,745 @@
 </html>
 
   <script>
-    function toggleAdminPanel() {
+    const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
+const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
+const SHEET_USERS_URL = https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/edit?gid=1281819744#gid=1281819744
+
+let membersList = [];
+let leafletMap = null;
+let mapMarkersMap = {};
+let currentZoneFilter = 'all';
+let currentLogCat = 'Paquetería';
+let isDarkMode = false;
+
+// --- SISTEMA DE AUTENTICACIÓN Y ADMINISTRACIÓN ---
+const MASTER_ADMIN = "xasharitl"; 
+let isRegistering = false;
+
+function toggleMode() {
+    isRegistering = !isRegistering;
+    document.getElementById('auth-subtitle').innerText = isRegistering ? 'Crea tu cuenta de acceso' : 'Acceso Restringido - Inicia Sesión';
+    document.getElementById('auth-btn').innerText = isRegistering ? 'Registrarse' : 'Iniciar Sesión';
+    document.getElementById('toggle-mode-btn').innerText = isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
+}
+
+function handleAuth() {
+    const user = document.getElementById('auth-user').value.trim();
+    const pass = document.getElementById('auth-pass').value.trim();
+
+    if (!user || !pass) {
+        alert('Por favor, completa todos los campos.');
+        return;
+    }
+
+    if (isRegistering) {
+        if (user === MASTER_ADMIN) {
+            alert('Este nombre de usuario está reservado para el administrador.');
+            return;
+        }
+
+        if (localStorage.getItem('app_user_' + user)) {
+            alert('El usuario ya existe. Intenta iniciar sesión.');
+            return;
+        }
+
+        const userData = { pass: pass, approved: false };
+        localStorage.setItem('app_user_' + user, JSON.stringify(userData));
+        alert('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.');
+        toggleMode();
+    } else {
+        if (user === MASTER_ADMIN) {
+            // Forzar actualización de tu contraseña de administrador a 'Sax_1995'
+            localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
+
+            if (pass !== "Sax_1995") {
+                alert('Contraseña de administrador incorrecta.');
+                return;
+            }
+
+            localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
+            checkSession();
+            return;
+        }
+
+        const rawData = localStorage.getItem('app_user_' + user);
+        if (!rawData) {
+            alert('Usuario o contraseña incorrectos.');
+            return;
+        }
+
+        const userData = JSON.parse(rawData);
+        if (userData.pass !== pass) {
+            alert('Usuario o contraseña incorrectos.');
+            return;
+        }
+
+        if (!userData.approved) {
+            alert('Tu cuenta aún no ha sido aprobada por el administrador.');
+            return;
+        }
+
+        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+        localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
+        
+        checkSession();
+    }
+}
+
+function checkSession() {
+    const sessionData = localStorage.getItem('app_session');
+    const authScreen = document.getElementById('auth-screen');
+
+    if (!sessionData) {
+        authScreen.style.display = 'flex';
+        return;
+    }
+
+    const session = JSON.parse(sessionData);
+
+    if (session.user === MASTER_ADMIN) {
+        authScreen.style.display = 'none';
+        return;
+    }
+
+    const currentTime = new Date().getTime();
+    if (session.expiryTime && currentTime > session.expiryTime) {
+        alert('Tu sesión de 24 horas ha expirado. Por favor, inicia sesión nuevamente.');
+        localStorage.removeItem('app_session');
+        authScreen.style.display = 'flex';
+    } else {
+        authScreen.style.display = 'none';
+    }
+}
+
+// --- PANEL DE ADMINISTRACIÓN Y PERFIL ---
+function toggleAdminPanel() {
+    const activeSession = JSON.parse(localStorage.getItem('app_session') || '{}');
+
+    if (activeSession.user !== MASTER_ADMIN) {
+        const inputAdminPass = prompt("Esta sección es exclusiva para el administrador. Ingresa tu contraseña:");
+        const adminData = JSON.parse(localStorage.getItem('app_user_' + MASTER_ADMIN) || '{}');
+        
+        if (!inputAdminPass || inputAdminPass !== (adminData.pass || "Sax_1995")) {
+            alert('Acceso denegado.');
+            return;
+        }
+    }
+
     const modal = document.getElementById('admin-modal');
-    if (!modal) return;
-    
     const isHidden = modal.classList.contains('hidden');
+    
     if (isHidden) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        if (typeof switchAdminTab === 'function') {
-            switchAdminTab('users');
-        }
+        switchAdminTab('users');
     } else {
         modal.classList.remove('flex');
         modal.classList.add('hidden');
     }
 }
+
+function switchAdminTab(tab) {
+    const usersSec = document.getElementById('section-users');
+    const profileSec = document.getElementById('section-profile');
+    const btnUsers = document.getElementById('tab-users-btn');
+    const btnProfile = document.getElementById('tab-profile-btn');
+
+    if (tab === 'users') {
+        usersSec.classList.remove('hidden');
+        profileSec.classList.add('hidden');
+        btnUsers.className = "px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition";
+        btnProfile.className = "px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition";
+        loadRegisteredUsers();
+    } else {
+        usersSec.classList.add('hidden');
+        profileSec.classList.remove('hidden');
+        btnProfile.className = "px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition";
+        btnUsers.className = "px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition";
+        
+        const savedProfile = JSON.parse(localStorage.getItem('admin_profile') || '{}');
+        if (savedProfile.name) document.getElementById('profile-name').value = savedProfile.name;
+        if (savedProfile.dept) document.getElementById('profile-dept').value = savedProfile.dept;
+    }
+}
+
+function saveProfileData() {
+    const name = document.getElementById('profile-name').value.trim();
+    const dept = document.getElementById('profile-dept').value.trim();
+    
+    localStorage.setItem('admin_profile', JSON.stringify({ name, dept }));
+    alert('¡Datos guardados exitosamente!');
+}
+
+function loadRegisteredUsers() {
+    const listContainer = document.getElementById('admin-users-list');
+    listContainer.innerHTML = '';
+    let userCount = 0;
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('app_user_')) {
+            const username = key.replace('app_user_', '');
+            if (username === MASTER_ADMIN) continue;
+
+            userCount++;
+            const userData = JSON.parse(localStorage.getItem(key) || '{}');
+            const isApproved = userData.approved;
+            
+            const userRow = document.createElement('div');
+            userRow.className = 'flex justify-between items-center bg-white p-2.5 rounded-xl border shadow-sm';
+            userRow.innerHTML = `
+                <div>
+                    <span class="font-medium text-slate-700 block text-xs"><i class="fa-solid fa-user text-xs mr-1 text-blue-500"></i>${username}</span>
+                    <span class="text-[10px] ${isApproved ? 'text-emerald-600 font-semibold' : 'text-amber-600'}">${isApproved ? 'Aprobado' : 'Pendiente de aprobación'}</span>
+                </div>
+                <div class="flex gap-1.5">
+                    ${!isApproved ? `<button onclick="approveUser('${username}')" class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg font-semibold hover:bg-emerald-100 transition">Aprobar</button>` : ''}
+                    <button onclick="deleteUser('${username}')" class="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg font-semibold hover:bg-red-100 transition">Eliminar</button>
+                </div>
+            `;
+            listContainer.appendChild(userRow);
+        }
+    }
+
+    if (userCount === 0) {
+        listContainer.innerHTML = `<p class="text-center text-slate-400 py-6 text-xs">No hay usuarios registrados esperando validación.</p>`;
+    }
+}
+
+function approveUser(username) {
+    const rawData = localStorage.getItem('app_user_' + username);
+    if (rawData) {
+        const userData = JSON.parse(rawData);
+        userData.approved = true;
+        localStorage.setItem('app_user_' + username, JSON.stringify(userData));
+        loadRegisteredUsers();
+    }
+}
+
+function deleteUser(username) {
+    if (confirm(`¿Estás seguro de eliminar el acceso para el usuario "${username}"?`)) {
+        localStorage.removeItem('app_user_' + username);
+        loadRegisteredUsers();
+    }
+}
+
+function clearActiveSession() {
+    if (confirm('¿Deseas cerrar la sesión activa?')) {
+        localStorage.removeItem('app_session');
+        location.reload();
+    }
+}
+
+// --- FUNCIONES DE LA APP ---
+function cleanKey(str) {
+    if (!str) return "";
+    return str.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+async function loadSheetData() {
+    try {
+        let coordsDictionary = {};
+
+        try {
+            const resCoords = await fetch(SHEET_COORD_URL);
+            if (resCoords.ok) {
+                const textCoords = await resCoords.text();
+                coordsDictionary = parseCoordsCSV(textCoords);
+            }
+        } catch(e) {
+            console.warn("Advertencia al cargar coordenadas complementarias.");
+        }
+
+        const resMembers = await fetch(SHEET_MEMBERS_URL);
+        if (!resMembers.ok) throw new Error("Error en respuesta de red");
+
+        const textMembers = await resMembers.text();
+        parseCSV(textMembers, coordsDictionary);
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const syncEl = document.getElementById('syncStatus');
+        if (syncEl) syncEl.innerText = `Sincronizado (${timeString})`;
+    } catch (error) {
+        console.error("Error al cargar datos:", error);
+        const listEl = document.getElementById('residentList');
+        if (listEl) listEl.innerHTML = `<div class="text-center py-10 text-red-500 text-sm">Error al conectar con la hoja de cálculo.</div>`;
+        const syncEl = document.getElementById('syncStatus');
+        if (syncEl) syncEl.innerText = `Error de conexión`;
+    }
+}
+
+function parseCoordsCSV(text) {
+    const lines = text.split("\n");
+    const coordsMap = {};
+
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+        
+        const latVal = parseFloat(cols[1]);
+        const lngVal = parseFloat(cols[2]);
+        const rawName = cols[cols.length - 1] || cols[4] || "";
+        const key = cleanKey(rawName);
+
+        if (key && !isNaN(latVal) && !isNaN(lngVal)) {
+            coordsMap[key] = { lat: latVal, lng: lngVal };
+        }
+    }
+    return coordsMap;
+}
+
+function findLocation(rawVilla, coordsMap) {
+    if (!rawVilla) return null;
+    const key = cleanKey(rawVilla);
+
+    if (key.includes('MC10') || key.includes('M10L') || key.includes('M15L') || key.includes('HURDNER') || key.includes('ELSALVADOR')) {
+        return null;
+    }
+
+    if (key.startsWith('R1') || key.startsWith('R2') || key.startsWith('R3')) {
+        return { lat: 23.6089788290, lng: -109.588890271 };
+    }
+
+    if (coordsMap[key]) return coordsMap[key];
+
+    const buildingMatch = key.match(/^([A-Z]+\d+)/);
+    if (buildingMatch) {
+        const bKey = buildingMatch[1];
+        if (coordsMap[bKey]) return coordsMap[bKey];
+    }
+
+    return null;
+}
+
+function parseCSV(text, coordsMap) {
+    const lines = text.split("\n");
+    membersList = [];
+
+    const defaultLat = 23.609724386;
+    const defaultLng = -109.5943928;
+
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+
+        if (cols.length >= 2 && cols[1]) {
+            const rawVilla = cols[3] || "";
+            
+            let latVal = parseFloat(cols[5]);
+            let lngVal = parseFloat(cols[6]);
+
+            if (isNaN(latVal) || isNaN(lngVal)) {
+                const mapLoc = findLocation(rawVilla, coordsMap);
+                if (mapLoc) {
+                    latVal = mapLoc.lat;
+                    lngVal = mapLoc.lng;
+                } else {
+                    latVal = defaultLat;
+                    lngVal = defaultLng;
+                }
+            }
+
+            membersList.push({
+                id: cols[0] || i,
+                name: cols[1],
+                zone: cols[2] || "Beach & Yacht Club",
+                villa: rawVilla || "N/D",
+                photo: cols[4] && cols[4].startsWith('http') ? cols[4] : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+                lat: latVal,
+                lng: lngVal,
+                transport: cols[7] || "Sin preferencias especiales de transporte.", 
+                bellman: cols[8] || "Sin notas específicas para bellman.",          
+                phone: cols[9] || "N/A"                                            
+            });
+        }
+    }
+    applyFilters();
+}
+
+function parseCSVLine(line) {
+    const cols = [];
+    let inQuotes = false;
+    let current = '';
+    for (let char of line) {
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
+    return cols;
+}
+
+function renderDirectory(list) {
+    const container = document.getElementById('residentList');
+    if(!container) return;
+    container.innerHTML = '';
+
+    if(list.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">No se encontraron registros</div>`;
+        return;
+    }
+
+    list.forEach(member => {
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+            isDarkMode 
+            ? 'bg-slate-900 border-slate-800 hover:border-blue-500 text-slate-100' 
+            : 'bg-white border-slate-100 hover:border-blue-300 text-slate-800'
+        }`;
+        card.onclick = () => openModal(member);
+
+        card.innerHTML = `
+            <div class="flex items-center gap-3">
+                <img src="${member.photo}" alt="${member.name}" class="w-12 h-12 rounded-full object-cover border border-slate-200">
+                <div>
+                    <h3 class="font-bold text-sm">${member.name}</h3>
+                    <span onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="text-xs text-blue-600 font-semibold hover:underline inline-flex items-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-map-pin text-[10px]"></i> Villa: ${member.villa}
+                    </span>
+                    <span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md mt-1 block w-max">${member.zone}</span>
+                </div>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function filterByZone(zone) {
+    currentZoneFilter = zone;
+    const btnMap = {
+        'all': 'btn-zone-all',
+        'Beach & Yacht Club': 'btn-zone-beach',
+        'Residencial': 'btn-zone-residential'
+    };
+
+    Object.keys(btnMap).forEach(z => {
+        const btn = document.getElementById(btnMap[z]);
+        if(btn) {
+            btn.className = (z === zone)
+                ? "px-3 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-sm transition-colors"
+                : "px-3 py-1.5 rounded-full font-medium bg-white text-slate-600 border border-slate-200 shrink-0 shadow-sm transition-colors";
+        }
+    });
+
+    applyFilters();
+}
+
+function filterDirectory() {
+    applyFilters();
+}
+
+function applyFilters() {
+    const searchEl = document.getElementById('searchInput');
+    const query = searchEl ? searchEl.value.toLowerCase() : '';
+    
+    const filtered = membersList.filter(m => {
+        const matchesSearch = m.name.toLowerCase().includes(query) || 
+                              m.villa.toLowerCase().includes(query) || 
+                              m.zone.toLowerCase().includes(query);
+        
+        let matchesZone = true;
+        if (currentZoneFilter !== 'all') {
+            matchesZone = m.zone.trim().toLowerCase() === currentZoneFilter.trim().toLowerCase();
+        }
+
+        return matchesSearch && matchesZone;
+    });
+    renderDirectory(filtered);
+    updateMapMarkers(filtered);
+}
+
+function focusOnMember(memberId) {
+    const member = membersList.find(m => m.id == memberId);
+    if (!member) return;
+
+    closeModal();
+    switchTab('map');
+
+    setTimeout(() => {
+        if (leafletMap) {
+            leafletMap.setView([member.lat, member.lng], 18);
+            if (mapMarkersMap[member.id]) {
+                mapMarkersMap[member.id].openPopup();
+            }
+        }
+    }, 250);
+}
+
+function setLogCategory(category) {
+    currentLogCat = category;
+    const catMap = {
+        'Paquetería': 'cat-paq',
+        'Transporte': 'cat-trans',
+        'Incidencia': 'cat-inc',
+        'General': 'cat-gen'
+    };
+
+    Object.keys(catMap).forEach(c => {
+        const btn = document.getElementById(catMap[c]);
+        if(btn) {
+            btn.className = (c === category)
+                ? "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition-colors shrink-0"
+                : "px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium transition-colors shrink-0";
+        }
+    });
+}
+
+function loadLogbook() {
+    const logList = document.getElementById('logList');
+    if(!logList) return;
+    
+    const savedLogs = JSON.parse(localStorage.getItem('bellman_logs') || '[]');
+    logList.innerHTML = '';
+
+    if (savedLogs.length === 0) {
+        logList.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay notas registradas en este turno.</div>`;
+        return;
+    }
+
+    savedLogs.forEach((log, index) => {
+        const item = document.createElement('div');
+        item.className = "bg-white p-3 rounded-xl border border-slate-200 text-xs flex justify-between items-start gap-2 text-slate-800 shadow-sm";
+        
+        let badgeColor = "bg-blue-100 text-blue-700";
+        if(log.category === 'Transporte') badgeColor = "bg-emerald-100 text-emerald-700";
+        if(log.category === 'Incidencia') badgeColor = "bg-red-100 text-red-700";
+        if(log.category === 'General') badgeColor = "bg-slate-100 text-slate-700";
+
+        item.innerHTML = `
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[9px] px-2 py-0.5 rounded font-bold ${badgeColor}">${log.category || 'General'}</span>
+                    <span class="text-[10px] text-slate-400">${log.time}</span>
+                </div>
+                <p>${log.text}</p>
+            </div>
+            <button onclick="deleteLogEntry(${index})" class="text-slate-400 hover:text-red-500 p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        logList.appendChild(item);
+    });
+}
+
+function addLogEntry() {
+    const input = document.getElementById('logInput');
+    if(!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const now = new Date();
+    const timeString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const savedLogs = JSON.parse(localStorage.getItem('bellman_logs') || '[]');
+    savedLogs.unshift({ text, category: currentLogCat, time: timeString });
+    localStorage.setItem('bellman_logs', JSON.stringify(savedLogs));
+
+    input.value = '';
+    loadLogbook();
+}
+
+function deleteLogEntry(index) {
+    const savedLogs = JSON.parse(localStorage.getItem('bellman_logs') || '[]');
+    savedLogs.splice(index, 1);
+    localStorage.setItem('bellman_logs', JSON.stringify(savedLogs));
+    loadLogbook();
+}
+
+function clearLogbook() {
+    if(confirm('¿Deseas vaciar la bitácora de este turno?')) {
+        localStorage.removeItem('bellman_logs');
+        loadLogbook();
+    }
+}
+
+function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    const container = document.getElementById('appContainer');
+    const btnIcon = document.querySelector('#darkModeBtn i');
+
+    if(container) {
+        container.classList.toggle('bg-slate-950', isDarkMode);
+        container.classList.toggle('text-white', isDarkMode);
+    }
+    if(btnIcon) {
+        btnIcon.className = isDarkMode ? "fa-solid fa-sun" : "fa-solid fa-moon";
+    }
+    applyFilters();
+    loadLogbook();
+}
+
+function copyResidentDetails() {
+    const modalName = document.getElementById('modalName');
+    const modalVilla = document.getElementById('modalVilla');
+    const modalTransport = document.getElementById('modalTransport');
+    const modalBellman = document.getElementById('modalBellman');
+    const modalPhone = document.getElementById('modalPhone');
+
+    if(!modalName) return;
+
+    const name = modalName.innerText;
+    const villa = modalVilla ? modalVilla.innerText : '';
+    const transport = modalTransport ? modalTransport.innerText : '';
+    const bellman = modalBellman ? modalBellman.innerText : '';
+    const phone = modalPhone ? modalPhone.innerText : '';
+
+    const reportText = `[COSTA PALMAS - OPERACIÓN]\nResidente: ${name}\n${villa}\nTransporte: ${transport}\nNotas Bellman: ${bellman}\nTel: ${phone}`;
+
+    navigator.clipboard.writeText(reportText).then(() => {
+        const btn = document.getElementById('copyBtn');
+        if(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Copiado al portapapeles!`;
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-slate-800');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600');
+                btn.classList.add('bg-slate-800');
+            }, 2000);
+        }
+    });
+}
+
+function switchTab(tab) {
+    const dirView = document.getElementById('view-directory');
+    const mapView = document.getElementById('view-map');
+    const logView = document.getElementById('view-logbook');
+    
+    const navDir = document.getElementById('nav-dir');
+    const navMap = document.getElementById('nav-map');
+    const navLog = document.getElementById('nav-log');
+
+    if(dirView) dirView.classList.add('hidden');
+    if(mapView) mapView.classList.add('hidden');
+    if(logView) logView.classList.add('hidden');
+
+    const inactiveColor = "flex flex-col items-center text-slate-400 transition-colors";
+    if(navDir) navDir.className = inactiveColor;
+    if(navMap) navMap.className = inactiveColor;
+    if(navLog) navLog.className = inactiveColor;
+
+    if(tab === 'directory') {
+        if(dirView) dirView.classList.remove('hidden');
+        if(navDir) navDir.className = "flex flex-col items-center text-blue-600 transition-colors";
+    } else if(tab === 'map') {
+        if(mapView) mapView.classList.remove('hidden');
+        if(navMap) navMap.className = "flex flex-col items-center text-blue-600 transition-colors";
+        
+        setTimeout(() => {
+            if(!leafletMap) {
+                initMap();
+            } else {
+                leafletMap.invalidateSize();
+            }
+        }, 100);
+    } else if(tab === 'logbook') {
+        if(logView) logView.classList.remove('hidden');
+        if(navLog) navLog.className = "flex flex-col items-center text-blue-600 transition-colors";
+        loadLogbook();
+    }
+}
+
+function initMap() {
+    const mapContainer = document.getElementById('map');
+    if(!mapContainer) return;
+
+    const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+    });
+
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Esri'
+    });
+
+    leafletMap = L.map('map', {
+        center: [23.609724386, -109.5943928],
+        zoom: 16,
+        layers: [satelliteLayer]
+    });
+
+    const baseLayers = {
+        "Estándar": standardLayer,
+        "Satelital": satelliteLayer
+    };
+
+    L.control.layers(baseLayers).addTo(leafletMap);
+    updateMapMarkers(membersList);
+}
+
+function updateMapMarkers(list) {
+    if (!leafletMap) return;
+    
+    Object.values(mapMarkersMap).forEach(m => leafletMap.removeLayer(m));
+    mapMarkersMap = {};
+
+    list.forEach(member => {
+        const marker = L.marker([member.lat, member.lng]).addTo(leafletMap);
+        marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>${member.zone}`);
+        marker.on('click', () => openModal(member));
+        mapMarkersMap[member.id] = marker;
+    });
+}
+
+function openModal(member) {
+    const modal = document.getElementById('detailModal');
+    if(!modal) return;
+
+    const img = document.getElementById('modalImg');
+    const name = document.getElementById('modalName');
+    const villa = document.getElementById('modalVilla');
+    const zone = document.getElementById('modalZone');
+    const transport = document.getElementById('modalTransport');
+    const bellman = document.getElementById('modalBellman');
+    const phone = document.getElementById('modalPhone');
+
+    if(img) img.src = member.photo;
+    if(name) name.innerText = member.name;
+    if(villa) villa.innerText = "Villa: " + member.villa;
+    if(zone) zone.innerText = member.zone;
+    if(transport) transport.innerText = member.transport;
+    if(bellman) bellman.innerText = member.bellman;
+    if(phone) phone.innerText = member.phone;
+    
+    const mapBtn = document.getElementById('goToMapBtn');
+    if(mapBtn) mapBtn.onclick = () => focusOnMember(member.id);
+    
+    const gpsBtn = document.getElementById('goToGpsBtn');
+    if(gpsBtn) {
+        gpsBtn.onclick = () => {
+            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${member.lat},${member.lng}`;
+            window.open(googleMapsUrl, '_blank');
+        };
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    const modal = document.getElementById('detailModal');
+    if(modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkSession();
+    loadSheetData();
+    loadLogbook();
+});
   </script>
 </body>
 </html>
