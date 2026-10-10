@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bellmans CP apps</title>
+
+  <style>
+    
+  </style>
+
+  
+</head>
+<body>
+  <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Costa Palmas - Bellman & Transport Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .phone-container {
+            max-width: 420px;
+            height: 850px;
+            margin: 20px auto;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 8px solid #1e293b;
+            position: relative;
+        }
+        #map { width: 100%; height: 100%; z-index: 10; touch-action: pan-x pan-y; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-950 flex items-center justify-center min-h-screen">
+
+    <!-- PANTALLA DE LOGIN / REGISTRO -->
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-6 relative flex flex-col justify-between" style="max-height: 480px;">
+            <div class="space-y-4">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Costa Palmas</h2>
+                    <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Acceso Restringido - Inicia Sesión</p>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-600 mb-1">USUARIO</label>
+                        <input type="text" id="auth-user" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800" placeholder="Ingresa tu usuario">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-600 mb-1">CONTRASEÑA</label>
+                        <input type="password" id="auth-pass" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800" placeholder="••••••••">
+                    </div>
+
+                    <button onclick="handleAuth()" id="auth-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md text-xs">
+                        Iniciar Sesión
+                    </button>
+                    
+                    <div class="text-center">
+                        <button onclick="toggleMode()" id="toggle-mode-btn" class="text-xs text-blue-600 hover:underline">
+                            ¿No tienes cuenta? Regístrate aquí
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t flex justify-between items-center text-[10px] text-slate-400">
+                <span>Seguridad activa</span>
+                <span class="text-slate-500 font-medium">Costa Palmas Security</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DEL PANEL DE ADMINISTRACIÓN Y USUARIO -->
+    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4">
+        <div class="bg-white text-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg">Panel de Usuario y Control</h3>
+                <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+            </div>
+
+            <!-- Pestañas de Navegación del Panel -->
+            <div class="flex gap-2 border-b pb-2 text-xs">
+                <button onclick="switchAdminTab('users')" id="tab-users-btn" class="px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition">Gestionar Accesos</button>
+                <button onclick="switchAdminTab('profile')" id="tab-profile-btn" class="px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition">Mis Datos</button>
+            </div>
+
+            <!-- SECCIÓN 1: GESTIÓN DE USUARIOS -->
+            <div id="section-users" class="flex-1 overflow-y-auto space-y-2 py-1">
+                <p class="text-xs text-slate-500 mb-2">Valida o elimina las cuentas que solicitan acceso:</p>
+                <div id="admin-users-list" class="space-y-2 border rounded-xl p-3 bg-slate-50 text-sm max-h-48 overflow-y-auto">
+                    <!-- Se carga dinámicamente -->
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: MIS DATOS -->
+            <div id="section-profile" class="hidden flex-1 space-y-3 py-1">
+                <p class="text-xs text-slate-500">Tus datos como Administrador:</p>
+                <div class="bg-slate-50 p-3 rounded-xl border space-y-2 text-xs">
+                    <div>
+                        <label class="font-semibold text-slate-600">Nombre:</label>
+                        <input type="text" id="profile-name" value="Xasharitl Cuevas Jasso" class="w-full mt-1 p-2 bg-white border rounded-lg text-slate-800">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600">Departamento / Puesto:</label>
+                        <input type="text" id="profile-dept" value="Security & Bellman Department" class="w-full mt-1 p-2 bg-white border rounded-lg text-slate-800">
+                    </div>
+                    <button onclick="saveProfileData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">Guardar Cambios</button>
+                </div>
+            </div>
+
+            <!-- PIE DE PAGINA CON CERRAR SESIÓN -->
+            <div class="pt-3 border-t flex justify-between items-center">
+                <button onclick="clearActiveSession()" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-xl font-semibold hover:bg-red-100 transition flex items-center gap-1">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+                </button>
+                <button onclick="toggleAdminPanel()" class="bg-slate-800 text-white text-xs px-4 py-2 rounded-xl font-semibold hover:bg-slate-900 transition">
+                    Cerrar Panel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR TIPO CELULAR -->
+    <div id="appContainer" class="phone-container bg-slate-50 text-slate-800 transition-colors duration-300">
+        
+        <!-- BARRA SUPERIOR -->
+        <div class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center text-xs shrink-0 z-30">
+            <span class="font-bold">08:52 PM</span>
+            <div class="w-20 h-4 bg-black rounded-full mx-auto"></div>
+            <div class="flex space-x-2">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- ENCABEZADO -->
+        <header id="appHeader" class="bg-blue-900 text-white p-4 shadow-md shrink-0 z-30 transition-colors duration-300">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="font-bold text-lg">Costa Palmas</h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        <p id="syncStatus" class="text-[10px] text-blue-200">Sincronizando...</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleDarkMode()" id="darkModeBtn" class="w-9 h-9 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center text-sm border border-blue-600 transition-colors text-white" title="Cambiar Modo">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button onclick="toggleAdminPanel()" class="w-10 h-10 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center font-bold border border-blue-600 text-sm transition-colors text-white shadow-sm" title="Panel de Usuario">
+                        XC
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 overflow-y-auto relative flex flex-col no-scrollbar">
+            
+            <!-- VISTA 1: DIRECTORIO, BUSCADOR Y FILTROS -->
+            <div id="view-directory" class="p-4 flex flex-col gap-3 pb-20">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre, villa o zona (ej. OV-, R7)..." 
+                        class="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm text-slate-800"
+                        oninput="filterDirectory()">
+                </div>
+
+                <!-- FILTROS DE ZONA -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs">
+                    <button onclick="filterByZone('all')" id="btn-zone-all" class="px-3 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-sm transition-colors">Todas</button>
+                    <button onclick="filterByZone('Beach & Yacht Club')" id="btn-zone-beach" class="px-3 py-1.5 rounded-full font-medium bg-white text-slate-600 border border-slate-200 shrink-0 shadow-sm transition-colors">Beach & Yacht Club</button>
+                    <button onclick="filterByZone('Residencial')" id="btn-zone-residential" class="px-3 py-1.5 rounded-full font-medium bg-white text-slate-600 border border-slate-200 shrink-0 shadow-sm transition-colors">Residencial</button>
+                </div>
+
+                <div id="residentList" class="flex flex-col gap-3">
+                    <div class="text-center py-10 text-slate-400 text-sm">Cargando directorio...</div>
+                </div>
+            </div>
+
+            <!-- VISTA 2: MAPA INTERACTIVO -->
+            <div id="view-map" class="hidden flex-1 w-full h-full relative">
+                <div id="map"></div>
+            </div>
+
+            <!-- VISTA 3: BITÁCORA ACTIVA DE TURNO -->
+            <div id="view-logbook" class="hidden p-4 flex flex-col gap-3 pb-20">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold text-base">Bitácora de Turno</h2>
+                        <p class="text-xs text-slate-400">Avisos y pendientes para relevo</p>
+                    </div>
+                    <button onclick="clearLogbook()" class="text-xs text-red-500 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium transition-colors">
+                        <i class="fa-solid fa-trash"></i> Limpiar
+                    </button>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2.5">
+                    <div class="flex gap-2 text-[11px] overflow-x-auto no-scrollbar">
+                        <button type="button" onclick="setLogCategory('Paquetería')" id="cat-paq" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition-colors shrink-0">📦 Paquetería</button>
+                        <button type="button" onclick="setLogCategory('Transporte')" id="cat-trans" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium transition-colors shrink-0">🚐 Transporte</button>
+                        <button type="button" onclick="setLogCategory('Incidencia')" id="cat-inc" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium transition-colors shrink-0">⚠️ Incidencia</button>
+                        <button type="button" onclick="setLogCategory('General')" id="cat-gen" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium transition-colors shrink-0">📌 General</button>
+                    </div>
+
+                    <textarea id="logInput" rows="3" placeholder="Escribe un aviso rápido..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-800"></textarea>
+                    <button onclick="addLogEntry()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Añadir Nota a Bitácora
+                    </button>
+                </div>
+
+                <div id="logList" class="flex flex-col gap-2.5 mt-2"></div>
+            </div>
+
+        </main>
+
+        <!-- NAVEGACIÓN INFERIOR -->
+        <nav id="appNav" class="bg-white border-t border-slate-200 h-16 flex justify-around items-center px-2 shrink-0 z-30 transition-colors duration-300">
+            <button onclick="switchTab('directory')" id="nav-dir" class="flex flex-col items-center text-blue-600 transition-colors">
+                <i class="fa-solid fa-address-book text-base"></i>
+                <span class="text-[9px] font-medium mt-1">Directorio</span>
+            </button>
+            <button onclick="switchTab('map')" id="nav-map" class="flex flex-col items-center text-slate-400 transition-colors">
+                <i class="fa-solid fa-map-location-dot text-base"></i>
+                <span class="text-[9px] font-medium mt-1">Mapa</span>
+            </button>
+            <button onclick="switchTab('logbook')" id="nav-log" class="flex flex-col items-center text-slate-400 transition-colors">
+                <i class="fa-solid fa-clipboard-list text-base"></i>
+                <span class="text-[9px] font-medium mt-1">Bitácora</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- MODAL DE DETALLE -->
+    <div id="detailModal" class="absolute inset-0 bg-black/60 z-50 hidden flex items-end justify-center">
+        <div id="modalContentBox" class="bg-white text-slate-800 w-full max-w-[420px] rounded-t-3xl p-6 flex flex-col gap-4 animate-slide-up max-h-[85vh] overflow-y-auto">
+            <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto"></div>
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <img id="modalImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Foto" class="w-16 h-16 rounded-full object-cover border-2 border-blue-600 shadow-md">
+                    <div>
+                        <h2 id="modalName" class="font-bold text-lg"></h2>
+                        <p id="modalVilla" class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full inline-block mt-1"></p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="border-t border-slate-100 pt-3 flex flex-col gap-3 text-sm">
+                <div class="flex items-start gap-3 bg-slate-50 p-3 rounded-xl">
+                    <i class="fa-solid fa-building text-blue-600 mt-1"></i>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block">ZONA / TIPO DE MIEMBRO</span>
+                        <p id="modalZone" class="mt-0.5"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-50 p-3 rounded-xl">
+                    <i class="fa-solid fa-golf-ball-tee text-blue-600 mt-1"></i>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block">TRANSPORTE</span>
+                        <p id="modalTransport" class="mt-0.5"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-50 p-3 rounded-xl">
+                    <i class="fa-solid fa-bell-concierge text-blue-600 mt-1"></i>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block">NOTAS PARA BELLMAN</span>
+                        <p id="modalBellman" class="mt-0.5"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
+                    <i class="fa-solid fa-phone text-blue-600"></i>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block">TELÉFONO</span>
+                        <p id="modalPhone" class="font-medium"></p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="goToMapBtn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-xs shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-map-pin"></i> Ver ubicación en el Mapa interno
+            </button>
+
+            <button id="goToGpsBtn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs shadow-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-diamond-turn-right"></i> Iniciar Ruta en Google Maps
+            </button>
+
+            <button id="copyBtn" onclick="copyResidentDetails()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold text-xs shadow-md hover:bg-slate-900 transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-copy"></i> Copiar Datos para Bitácora / WhatsApp
+            </button>
+
+            <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-300 transition-colors">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
+        const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
+
+        let membersList = [];
+        let leafletMap = null;
+        let mapMarkersMap = {};
+        let currentZoneFilter = 'all';
+        let currentLogCat = 'Paquetería';
+        let isDarkMode = false;
+
+        // --- SISTEMA DE AUTENTICACIÓN Y ADMINISTRACIÓN ---
+        const MASTER_ADMIN = "xasharitl"; // Tu usuario fijo único
+        let isRegistering = false;
+
+        function toggleMode() {
+            isRegistering = !isRegistering;
+            document.getElementById('auth-subtitle').innerText = isRegistering ? 'Crea tu cuenta de acceso' : 'Acceso Restringido - Inicia Sesión';
+            document.getElementById('auth-btn').innerText = isRegistering ? 'Registrarse' : 'Iniciar Sesión';
+            document.getElementById('toggle-mode-btn').innerText = isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
+        }
+
+        function handleAuth() {
+            const user = document.getElementById('auth-user').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+
+            if (!user || !pass) {
+                alert('Por favor, completa todos los campos.');
+                return;
+            }
+
+            if (isRegistering) {
+                if (user === MASTER_ADMIN) {
+                    alert('Este nombre de usuario está reservado para el administrador.');
+                    return;
+                }
+
+                if (localStorage.getItem('app_user_' + user)) {
+                    alert('El usuario ya existe. Intenta iniciar sesión.');
+                    return;
+                }
+
+                const userData = { pass: pass, approved: false };
+                localStorage.setItem('app_user_' + user, JSON.stringify(userData));
+                alert('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.');
+                toggleMode();
+            } else {
+                if (user === MASTER_ADMIN) {
+                    const savedData = localStorage.getItem('app_user_' + user);
+                    if (!savedData) {
+                        localStorage.setItem('app_user_' + user, JSON.stringify({ pass: pass, approved: true }));
+                    } else {
+                        const parsed = JSON.parse(savedData);
+                        if (parsed.pass !== pass) {
+                            alert('Contraseña de administrador incorrecta.');
+                            return;
+                        }
+                    }
+
+                    localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
+                    checkSession();
+                    return;
+                }
+
+                const rawData = localStorage.getItem('app_user_' + user);
+                if (!rawData) {
+                    alert('Usuario o contraseña incorrectos.');
+                    return;
+                }
+
+                const userData = JSON.parse(rawData);
+                if (userData.pass !== pass) {
+                    alert('Usuario o contraseña incorrectos.');
+                    return;
+                }
+
+                if (!userData.approved) {
+                    alert('Tu cuenta aún no ha sido aprobada por el administrador.');
+                    return;
+                }
+
+                const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+                localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
+                
+                checkSession();
+            }
+        }
+
+        function checkSession() {
+            const sessionData = localStorage.getItem('app_session');
+            const authScreen = document.getElementById('auth-screen');
+
+            if (!sessionData) {
+                authScreen.style.display = 'flex';
+                return;
+            }
+
+            const session = JSON.parse(sessionData);
+
+            if (session.user === MASTER_ADMIN) {
+                authScreen.style.display = 'none';
+                return;
+            }
+
+            const currentTime = new Date().getTime();
+            if (session.expiryTime && currentTime > session.expiryTime) {
+                alert('Tu sesión de 24 horas ha expirado. Por favor, inicia sesión nuevamente.');
+                localStorage.removeItem('app_session');
+                authScreen.style.display = 'flex';
+            } else {
+                authScreen.style.display = 'none';
+            }
+        }
+
+        // --- PANEL DE ADMINISTRACIÓN Y PERFIL ---
+        function toggleAdminPanel() {
+            const activeSession = JSON.parse(localStorage.getItem('app_session') || '{}');
+
+            if (activeSession.user !== MASTER_ADMIN) {
+                const inputAdminPass = prompt("Esta sección es exclusiva para el administrador. Ingresa tu contraseña:");
+                const adminData = JSON.parse(localStorage.getItem('app_user_' + MASTER_ADMIN) || '{}');
+                
+                if (!inputAdminPass || inputAdminPass !== adminData.pass) {
+                    alert('Acceso denegado.');
+                    return;
+                }
+            }
+
+            const modal = document.getElementById('admin-modal');
+            const isHidden = modal.classList.contains('hidden');
+            
+            if (isHidden) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                switchAdminTab('users');
+            } else {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+
+        function switchAdminTab(tab) {
+            const usersSec = document.getElementById('section-users');
+            const profileSec = document.getElementById('section-profile');
+            const btnUsers = document.getElementById('tab-users-btn');
+            const btnProfile = document.getElementById('tab-profile-btn');
+
+            if (tab === 'users') {
+                usersSec.classList.remove('hidden');
+                profileSec.classList.add('hidden');
+                btnUsers.className = "px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition";
+                btnProfile.className = "px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition";
+                loadRegisteredUsers();
+            } else {
+                usersSec.classList.add('hidden');
+                profileSec.classList.remove('hidden');
+                btnProfile.className = "px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition";
+                btnUsers.className = "px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition";
+                
+                const savedProfile = JSON.parse(localStorage.getItem('admin_profile') || '{}');
+                if (savedProfile.name) document.getElementById('profile-name').value = savedProfile.name;
+                if (savedProfile.dept) document.getElementById('profile-dept').value = savedProfile.dept;
+            }
+        }
+
+        function saveProfileData() {
+            const name = document.getElementById('profile-name').value.trim();
+            const dept = document.getElementById('profile-dept').value.trim();
+            
+            localStorage.setItem('admin_profile', JSON.stringify({ name, dept }));
+            alert('¡Datos guardados exitosamente!');
+        }
+
+        function loadRegisteredUsers() {
+            const listContainer = document.getElementById('admin-users-list');
+            listContainer.innerHTML = '';
+            let userCount = 0;
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('app_user_')) {
+                    const username = key.replace('app_user_', '');
+                    if (username === MASTER_ADMIN) continue;
+
+                    userCount++;
+                    const userData = JSON.parse(localStorage.getItem(key) || '{}');
+                    const isApproved = userData.approved;
+                    
+                    const userRow = document.createElement('div');
+                    userRow.className = 'flex justify-between items-center bg-white p-2.5 rounded-xl border shadow-sm';
+                    userRow.innerHTML = `
+                        <div>
+                            <span class="font-medium text-slate-700 block text-xs"><i class="fa-solid fa-user text-xs mr-1 text-blue-500"></i>${username}</span>
+                            <span class="text-[10px] ${isApproved ? 'text-emerald-600 font-semibold' : 'text-amber-600'}">${isApproved ? 'Aprobado' : 'Pendiente de aprobación'}</span>
+                        </div>
+                        <div class="flex gap-1.5">
+                            ${!isApproved ? `<button onclick="approveUser('${username}')" class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg font-semibold hover:bg-emerald-100 transition">Aprobar</button>` : ''}
+                            <button onclick="deleteUser('${username}')" class="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg font-semibold hover:bg-red-100 transition">Eliminar</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(userRow);
+                }
+            }
+
+            if (userCount === 0) {
+                listContainer.innerHTML = `<p class="text-center text-slate-400 py-6 text-xs">No hay usuarios registrados esperando validación.</p>`;
+            }
+        }
+
+        function approveUser(username) {
+            const rawData = localStorage.getItem('app_user_' + username);
+            if (rawData) {
+                const userData = JSON.parse(rawData);
+                userData.approved = true;
+                localStorage.setItem('app_user_' + username, JSON.stringify(userData));
+                loadRegisteredUsers();
+            }
+        }
+
+        function deleteUser(username) {
+            if (confirm(`¿Estás seguro de eliminar el acceso para el usuario "${username}"?`)) {
+                localStorage.removeItem('app_user_' + username);
+                loadRegisteredUsers();
+            }
+        }
+
+        function clearActiveSession() {
+            if (confirm('¿Deseas cerrar la sesión activa?')) {
+                localStorage.removeItem('app_session');
+                location.reload();
+            }
+        }
+
+        // --- FUNCIONES DE LA APP ---
+        function cleanKey(str) {
+            if (!str) return "";
+            return str.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        }
+
+        async function loadSheetData() {
+            try {
+                let coordsDictionary = {};
+
+                try {
+                    const resCoords = await fetch(SHEET_COORD_URL);
+                    if (resCoords.ok) {
+                        const textCoords = await resCoords.text();
+                        coordsDictionary = parseCoordsCSV(textCoords);
+                    }
+                } catch(e) {
+                    console.warn("Advertencia al cargar coordenadas complementarias.");
+                }
+
+                const resMembers = await fetch(SHEET_MEMBERS_URL);
+                if (!resMembers.ok) throw new Error("Error en respuesta de red");
+
+                const textMembers = await resMembers.text();
+                parseCSV(textMembers, coordsDictionary);
+
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const syncEl = document.getElementById('syncStatus');
+                if (syncEl) syncEl.innerText = `Sincronizado (${timeString})`;
+            } catch (error) {
+                console.error("Error al cargar datos:", error);
+                const listEl = document.getElementById('residentList');
+                if (listEl) listEl.innerHTML = `<div class="text-center py-10 text-red-500 text-sm">Error al conectar con la hoja de cálculo.</div>`;
+                const syncEl = document.getElementById('syncStatus');
+                if (syncEl) syncEl.innerText = `Error de conexión`;
+            }
+        }
+
+        function parseCoordsCSV(text) {
+            const lines = text.split("\n");
+            const coordsMap = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = parseCSVLine(lines[i]);
+                
+                const latVal = parseFloat(cols[1]);
+                const lngVal = parseFloat(cols[2]);
+                const rawName = cols[cols.length - 1] || cols[4] || "";
+                const key = cleanKey(rawName);
+
+                if (key && !isNaN(latVal) && !isNaN(lngVal)) {
+                    coordsMap[key] = { lat: latVal, lng: lngVal };
+                }
+            }
+            return coordsMap;
+        }
+
+        function findLocation(rawVilla, coordsMap) {
+            if (!rawVilla) return null;
+            const key = cleanKey(rawVilla);
+
+            if (key.includes('MC10') || key.includes('M10L') || key.includes('M15L') || key.includes('HURDNER') || key.includes('ELSALVADOR')) {
+                return null;
+            }
+
+            if (key.startsWith('R1') || key.startsWith('R2') || key.startsWith('R3')) {
+                return { lat: 23.6089788290, lng: -109.588890271 };
+            }
+
+            if (coordsMap[key]) return coordsMap[key];
+
+            const buildingMatch = key.match(/^([A-Z]+\d+)/);
+            if (buildingMatch) {
+                const bKey = buildingMatch[1];
+                if (coordsMap[bKey]) return coordsMap[bKey];
+            }
+
+            return null;
+        }
+
+        function parseCSV(text, coordsMap) {
+            const lines = text.split("\n");
+            membersList = [];
+
+            const defaultLat = 23.609724386;
+            const defaultLng = -109.5943928;
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = parseCSVLine(lines[i]);
+
+                if (cols.length >= 2 && cols[1]) {
+                    const rawVilla = cols[3] || "";
+                    
+                    let latVal = parseFloat(cols[5]);
+                    let lngVal = parseFloat(cols[6]);
+
+                    if (isNaN(latVal) || isNaN(lngVal)) {
+                        const mapLoc = findLocation(rawVilla, coordsMap);
+                        if (mapLoc) {
+                            latVal = mapLoc.lat;
+                            lngVal = mapLoc.lng;
+                        } else {
+                            latVal = defaultLat;
+                            lngVal = defaultLng;
+                        }
+                    }
+
+                    membersList.push({
+                        id: cols[0] || i,
+                        name: cols[1],
+                        zone: cols[2] || "Beach & Yacht Club",
+                        villa: rawVilla || "N/D",
+                        photo: cols[4] && cols[4].startsWith('http') ? cols[4] : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+                        lat: latVal,
+                        lng: lngVal,
+                        transport: cols[7] || "Sin preferencias especiales de transporte.", 
+                        bellman: cols[8] || "Sin notas específicas para bellman.",          
+                        phone: cols[9] || "N/A"                                            
+                    });
+                }
+            }
+            applyFilters();
+        }
+
+        function parseCSVLine(line) {
+            const cols = [];
+            let inQuotes = false;
+            let current = '';
+            for (let char of line) {
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
+            return cols;
+        }
+
+        function renderDirectory(list) {
+            const container = document.getElementById('residentList');
+            if(!container) return;
+            container.innerHTML = '';
+
+            if(list.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">No se encontraron registros</div>`;
+                return;
+            }
+
+            list.forEach(member => {
+                const card = document.createElement('div');
+                card.className = `p-3.5 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+                    isDarkMode 
+                    ? 'bg-slate-900 border-slate-800 hover:border-blue-500 text-slate-100' 
+                    : 'bg-white border-slate-100 hover:border-blue-300 text-slate-800'
+                }`;
+                card.onclick = () => openModal(member);
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${member.photo}" alt="${member.name}" class="w-12 h-12 rounded-full object-cover border border-slate-200">
+                        <div>
+                            <h3 class="font-bold text-sm">${member.name}</h3>
+                            <span onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="text-xs text-blue-600 font-semibold hover:underline inline-flex items-center gap-1 mt-0.5">
+                                <i class="fa-solid fa-map-pin text-[10px]"></i> Villa: ${member.villa}
+                            </span>
+                            <span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md mt-1 block w-max">${member.zone}</span>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterByZone(zone) {
+            currentZoneFilter = zone;
+            const btnMap = {
+                'all': 'btn-zone-all',
+                'Beach & Yacht Club': 'btn-zone-beach',
+                'Residencial': 'btn-zone-residential'
+            };
+
+            Object.keys(btnMap).forEach(z => {
+                const btn = document.getElementById(btnMap[z]);
+                if(btn) {
+                    btn.className = (z === zone)
+                        ? "px-3 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-sm transition-colors"
+                        : "px-3 py-1.5 rounded-full font-medium bg-white text-slate-600 border border-slate-200 shrink-0 shadow-sm transition-colors";
+                }
+            });
+
+            applyFilters();
+        }
+
+        function filterDirectory() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchEl = document.getElementById('searchInput');
+            const query = searchEl ? searchEl.value.toLowerCase() : '';
+            
+            const filtered = membersList.filter(m => {
+                const matchesSearch = m.name.toLowerCase().includes(query) || 
+                                      m.villa.toLowerCase().includes(query) || 
+                                      m.zone.toLowerCase().includes(query);
+                
+                let matchesZone = true;
+                if (currentZoneFilter !== 'all') {
+                    matchesZone = m.zone.trim().toLowerCase() === currentZoneFilter.trim().toLowerCase();
+                }
+
+                return matchesSearch && matchesZone;
+            });
+            renderDirectory(filtered);
+            updateMapMarkers(filtered);
+        }
+
+        function focusOnMember(memberId) {
+            const member = membersList.find(m => m.id == memberId);
+            if (!member) return;
+
+            closeModal();
+            switchTab('map');
+
+            setTimeout(() => {
+                if (leafletMap) {
+                    leafletMap.setView([member.lat, member.lng], 18);
+                    if (mapMarkersMap[member.id]) {
+                        mapMarkersMap[member.id].openPopup();
+                    }
+                }
+            }, 250);
+        }
+
+        function setLogCategory(category) {
+            currentLogCat = category;
+            const catMap = {
+                'Paquetería': 'cat-paq',
+                'Transporte': 'cat-trans',
+                'Incidencia': 'cat-inc',
+                'General': 'cat-gen'
+            };
+
+            Object.keys(catMap).forEach(c => {
+                const btn = document.getElementById(catMap[c]);
+                if(btn) {
+                    btn.className = (c === category)
+                        ? "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition-colors shrink-0"
+                        : "px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium transition-colors shrink-0";
+                }
+            });
+        }
+
+        function loadLogbook() {
+            const logList = document.getElementById('logList');
+            if(!logList) return;
+            
+            const savedLogs = JSON.parse(localStorage.getItem('bellman_logs') || '[]');
+            logList.innerHTML = '';
+
+            if (savedLogs.length === 0) {
+                logList.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay notas registradas en este turno.</div>`;
+                return;
+            }
+
+            savedLogs.forEach((log, index) => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-3 rounded-xl border border-slate-200 text-xs flex justify-between items-start gap-2 text-slate-800 shadow-sm";
+                
+                let badgeColor = "bg-blue-100 text-blue-700";
+                if(log.category === 'Transporte') badgeColor = "bg-emerald-100 text-emerald-700";
+                if(log.category === 'Incidencia') badgeColor = "bg-red-100 text-red-700";
+                if(log.category === 'General') badgeColor = "bg-slate-100 text-slate-700";
+
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[9px] px-2 py-0.5 rounded font-bold ${badgeColor}">${log.category || 'General'}</span>
+                            <span class="text-[10px] text-slate-400">${log.time}</span>
+                        </div>
+                        <p>${log.text}</p>
+                    </div>
+                    <button onclick="deleteLogEntry(${index})" class="text-slate-400 hover:text-red-500 p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                logList.appendChild(item);
+            });
+        }
+
+        function addLogEntry() {
+            const input = document.getElementById('logInput');
+            if(!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+
+            const now = new Date();
+            const timeString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const savedLogs = JSON.parse(localStorage.getItem('bellman_logs') || '[]');
+            savedLogs.unshift({ text, category: currentLogCat, time: timeString });
+            localStorage.setItem('bellman_logs', JSON.stringify(savedLogs));
+
+            input.value = '';
+            loadLogbook();
+        }
+
+        function deleteLogEntry(index) {
+            const savedLogs = JSON.parse(localStorage.getItem('bellman_logs') || '[]');
+            savedLogs.splice(index, 1);
+            localStorage.setItem('bellman_logs', JSON.stringify(savedLogs));
+            loadLogbook();
+        }
+
+        function clearLogbook() {
+            if(confirm('¿Deseas vaciar la bitácora de este turno?')) {
+                localStorage.removeItem('bellman_logs');
+                loadLogbook();
+            }
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            const container = document.getElementById('appContainer');
+            const btnIcon = document.querySelector('#darkModeBtn i');
+
+            if(container) {
+                container.classList.toggle('bg-slate-950', isDarkMode);
+                container.classList.toggle('text-white', isDarkMode);
+            }
+            if(btnIcon) {
+                btnIcon.className = isDarkMode ? "fa-solid fa-sun" : "fa-solid fa-moon";
+            }
+            applyFilters();
+            loadLogbook();
+        }
+
+        function copyResidentDetails() {
+            const modalName = document.getElementById('modalName');
+            const modalVilla = document.getElementById('modalVilla');
+            const modalTransport = document.getElementById('modalTransport');
+            const modalBellman = document.getElementById('modalBellman');
+            const modalPhone = document.getElementById('modalPhone');
+
+            if(!modalName) return;
+
+            const name = modalName.innerText;
+            const villa = modalVilla ? modalVilla.innerText : '';
+            const transport = modalTransport ? modalTransport.innerText : '';
+            const bellman = modalBellman ? modalBellman.innerText : '';
+            const phone = modalPhone ? modalPhone.innerText : '';
+
+            const reportText = `[COSTA PALMAS - OPERACIÓN]\nResidente: ${name}\n${villa}\nTransporte: ${transport}\nNotas Bellman: ${bellman}\nTel: ${phone}`;
+
+            navigator.clipboard.writeText(reportText).then(() => {
+                const btn = document.getElementById('copyBtn');
+                if(btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Copiado al portapapeles!`;
+                    btn.classList.add('bg-green-600');
+                    btn.classList.remove('bg-slate-800');
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('bg-green-600');
+                        btn.classList.add('bg-slate-800');
+                    }, 2000);
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            const dirView = document.getElementById('view-directory');
+            const mapView = document.getElementById('view-map');
+            const logView = document.getElementById('view-logbook');
+            
+            const navDir = document.getElementById('nav-dir');
+            const navMap = document.getElementById('nav-map');
+            const navLog = document.getElementById('nav-log');
+
+            if(dirView) dirView.classList.add('hidden');
+            if(mapView) mapView.classList.add('hidden');
+            if(logView) logView.classList.add('hidden');
+
+            const inactiveColor = "flex flex-col items-center text-slate-400 transition-colors";
+            if(navDir) navDir.className = inactiveColor;
+            if(navMap) navMap.className = inactiveColor;
+            if(navLog) navLog.className = inactiveColor;
+
+            if(tab === 'directory') {
+                if(dirView) dirView.classList.remove('hidden');
+                if(navDir) navDir.className = "flex flex-col items-center text-blue-600 transition-colors";
+            } else if(tab === 'map') {
+                if(mapView) mapView.classList.remove('hidden');
+                if(navMap) navMap.className = "flex flex-col items-center text-blue-600 transition-colors";
+                
+                setTimeout(() => {
+                    if(!leafletMap) {
+                        initMap();
+                    } else {
+                        leafletMap.invalidateSize();
+                    }
+                }, 100);
+            } else if(tab === 'logbook') {
+                if(logView) logView.classList.remove('hidden');
+                if(navLog) navLog.className = "flex flex-col items-center text-blue-600 transition-colors";
+                loadLogbook();
+            }
+        }
+
+        function initMap() {
+            const mapContainer = document.getElementById('map');
+            if(!mapContainer) return;
+
+            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap'
+            });
+
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: 'Esri'
+            });
+
+            leafletMap = L.map('map', {
+                center: [23.609724386, -109.5943928],
+                zoom: 16,
+                layers: [satelliteLayer]
+            });
+
+            const baseLayers = {
+                "Estándar": standardLayer,
+                "Satelital": satelliteLayer
+            };
+
+            L.control.layers(baseLayers).addTo(leafletMap);
+            updateMapMarkers(membersList);
+        }
+
+        function updateMapMarkers(list) {
+            if (!leafletMap) return;
+            
+            Object.values(mapMarkersMap).forEach(m => leafletMap.removeLayer(m));
+            mapMarkersMap = {};
+
+            list.forEach(member => {
+                const marker = L.marker([member.lat, member.lng]).addTo(leafletMap);
+                marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>${member.zone}`);
+                marker.on('click', () => openModal(member));
+                mapMarkersMap[member.id] = marker;
+            });
+        }
+
+        function openModal(member) {
+            const modal = document.getElementById('detailModal');
+            if(!modal) return;
+
+            const img = document.getElementById('modalImg');
+            const name = document.getElementById('modalName');
+            const villa = document.getElementById('modalVilla');
+            const zone = document.getElementById('modalZone');
+            const transport = document.getElementById('modalTransport');
+            const bellman = document.getElementById('modalBellman');
+            const phone = document.getElementById('modalPhone');
+
+            if(img) img.src = member.photo;
+            if(name) name.innerText = member.name;
+            if(villa) villa.innerText = "Villa: " + member.villa;
+            if(zone) zone.innerText = member.zone;
+            if(transport) transport.innerText = member.transport;
+            if(bellman) bellman.innerText = member.bellman;
+            if(phone) phone.innerText = member.phone;
+            
+            const mapBtn = document.getElementById('goToMapBtn');
+            if(mapBtn) mapBtn.onclick = () => focusOnMember(member.id);
+            
+            const gpsBtn = document.getElementById('goToGpsBtn');
+            if(gpsBtn) {
+                gpsBtn.onclick = () => {
+                    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${member.lat},${member.lng}`;
+                    window.open(googleMapsUrl, '_blank');
+                };
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailModal');
+            if(modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+            loadSheetData();
+            loadLogbook();
+        });
+    </script>
+</body>
+</html>
+
+  <script>
+    function toggleAdminPanel() {
+    const modal = document.getElementById('admin-modal');
+    if (!modal) return;
+    
+    const isHidden = modal.classList.contains('hidden');
+    if (isHidden) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        if (typeof switchAdminTab === 'function') {
+            switchAdminTab('users');
+        }
+    } else {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+}
+  </script>
+</body>
+</html>
