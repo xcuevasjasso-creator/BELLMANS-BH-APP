@@ -1131,58 +1131,43 @@ function handleAuth() {
         return;
     }
 
-    if (isRegistering) {
-        if (user === MASTER_ADMIN) {
-            alert('Este nombre de usuario está reservado para el administrador.');
+    if (user === MASTER_ADMIN) {
+        // Contraseña de administrador predefinida
+        if (pass !== "Sax_1995") {
+            alert('Contraseña de administrador incorrecta.');
             return;
         }
 
-        if (localStorage.getItem('app_user_' + user)) {
-            alert('El usuario ya existe. Intenta iniciar sesión.');
-            return;
-        }
-
-        const userData = { pass: pass, approved: false };
-        localStorage.setItem('app_user_' + user, JSON.stringify(userData));
-        alert('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.');
-        toggleMode();
-    } else {
-        if (user === MASTER_ADMIN) {
-            // Forzar actualización de tu contraseña de administrador a 'Sax_1995'
-            localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
-
-            if (pass !== "Sax_1995") {
-                alert('Contraseña de administrador incorrecta.');
-                return;
-            }
-
-            localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
-            checkSession();
-            return;
-        }
-
-        const rawData = localStorage.getItem('app_user_' + user);
-        if (!rawData) {
-            alert('Usuario o contraseña incorrectos.');
-            return;
-        }
-
-        const userData = JSON.parse(rawData);
-        if (userData.pass !== pass) {
-            alert('Usuario o contraseña incorrectos.');
-            return;
-        }
-
-        if (!userData.approved) {
-            alert('Tu cuenta aún no ha sido aprobada por el administrador.');
-            return;
-        }
-
-        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
-        localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
-        
+        // Forzar registro y aprobación automática del admin en localStorage
+        localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
+        localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
         checkSession();
+        location.reload();
+        return;
     }
+
+    // Lógica para usuarios normales
+    const rawData = localStorage.getItem('app_user_' + user);
+    if (!rawData) {
+        alert('Usuario no registrado. Solicita al administrador que te registre.');
+        return;
+    }
+
+    const userData = JSON.parse(rawData);
+    if (userData.pass !== pass) {
+        alert('Contraseña incorrecta.');
+        return;
+    }
+
+    if (!userData.approved) {
+        alert('Tu cuenta aún no ha sido aprobada por el administrador.');
+        return;
+    }
+
+    const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+    localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
+    checkSession();
+    location.reload();
 }
 
 function checkSession() {
