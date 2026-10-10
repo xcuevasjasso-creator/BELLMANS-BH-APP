@@ -15,6 +15,22 @@
 </head>
 <body>
   <!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bellmans CP apps</title>
+
+  <style>
+    
+  </style>
+
+  
+</head>
+<body>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1935,6 +1951,79 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSheetData();
     loadLogbook();
 });
+  </script>
+</body>
+</html>
+
+  <script>
+    // Variable para almacenar los usuarios cargados de la hoja (puedes agregar tu enlace CSV de usuarios aquí)
+const SHEET_USERS_URL = "PEGAR_AQUI_EL_ENLACE_CSV_DE_TU_HOJA_DE_USUARIOS";
+
+async function handleAuth() {
+    const user = document.getElementById('auth-user').value.trim();
+    const pass = document.getElementById('auth-pass').value.trim();
+
+    if (!user || !pass) {
+        alert('Por favor, completa todos los campos.');
+        return;
+    }
+
+    // Administrador maestro de respaldo
+    const MASTER_ADMIN = "xasharitl";
+    if (user === MASTER_ADMIN && pass === "Sax_1995") {
+        localStorage.setItem('app_session', JSON.stringify({ user, role: 'admin', expiryTime: null }));
+        document.getElementById('auth-screen').style.display = 'none';
+        location.reload();
+        return;
+    }
+
+    try {
+        // Consultar la hoja de usuarios en línea
+        const res = await fetch(SHEET_USERS_URL);
+        const text = await res.text();
+        const lines = text.split("\n");
+        
+        let authenticated = false;
+        let userRole = 'bellman';
+
+        // Leer fila por fila saltando el encabezado (i = 1)
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cols = parseCSVLine(lines[i]);
+            
+            const sheetUser = (cols[0] || "").trim();
+            const sheetPass = (cols[1] || "").trim();
+            const sheetRole = (cols[2] || "").trim().toLowerCase();
+            const sheetActive = (cols[3] || "").trim().toUpperCase();
+
+            // Validar coincidencia de usuario, contraseña y estado activo (TRUE)
+            if (sheetUser.toLowerCase() === user.toLowerCase() && sheetPass === pass) {
+                if (sheetActive === 'TRUE' || sheetActive === 'VERDADERO' || sheetActive === '1') {
+                    authenticated = true;
+                    userRole = sheetRole || 'bellman';
+                    break;
+                } else {
+                    alert('Tu cuenta está inactiva. Contacta al administrador.');
+                    return;
+                }
+            }
+        }
+
+        if (authenticated) {
+            const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // Sesión de 24 horas
+            localStorage.setItem('app_session', JSON.stringify({ user, role: userRole, expiryTime }));
+            document.getElementById('auth-screen').style.display = 'none';
+            location.reload();
+        } else {
+            alert('Usuario, contraseña incorrectos o sin autorización.');
+        }
+
+    } catch (error) {
+        console.error("Error al validar con la hoja de usuarios:", error);
+        alert('Error al conectar con la base de datos de usuarios en línea.');
+    }
+}
+
   </script>
 </body>
 </html>
