@@ -41,10 +41,42 @@
             position: relative;
         }
         /* Ajuste absoluto para que el mapa ocupe el 100% de la pantalla del celular */
-        #view-map { position: absolute; inset: 0; width: 100%; height: 100%; }
-        #map { width: 100%; height: 100%; z-index: 10; touch-action: pan-x pan-y; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Mapa adaptable: mantiene las funciones existentes */
+#view-map {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 25;
+    background: #020617;
+}
+
+#map {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    z-index: 10;
+    touch-action: pan-x pan-y;
+}
+
+/* Solo adapta el mapa a pantallas de celular */
+@media (max-width: 600px) {
+    #view-map {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+    }
+
+    #map {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}
     </style>
 </head>
 <body class="bg-slate-950 flex items-center justify-center min-h-screen">
@@ -192,9 +224,9 @@
             </div>
 
             <!-- VISTA 2: MAPA INTERACTIVO -->
-            <div id="view-map" class="hidden">
-                <div id="map"></div>
-            </div>
+            <div id="view-map" class="hidden absolute top-0 left-0 w-full h-full z-20 bg-slate-950">
+                 <div id="map" class="w-full h-full"></div>
+             </div>
 
             <!-- VISTA 3: BITÁCORA ACTIVA DE TURNO -->
             <div id="view-logbook" class="hidden p-4 flex flex-col gap-3 pb-20">
@@ -1102,17 +1134,17 @@
   <script>
     const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
 const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
-const SHEET_USERS_URL = https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/edit?gid=1281819744#gid=1281819744
+const SHEET_ORIGIN_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1281819744";
 
 let membersList = [];
+let originDictionary = {};
 let leafletMap = null;
 let mapMarkersMap = {};
 let currentZoneFilter = 'all';
 let currentLogCat = 'Paquetería';
 let isDarkMode = false;
 
-// --- SISTEMA DE AUTENTICACIÓN Y ADMINISTRACIÓN ---
-const MASTER_ADMIN = "xasharitl"; 
+const MASTER_ADMIN = "xasharitl";
 let isRegistering = false;
 
 function toggleMode() {
@@ -1131,43 +1163,65 @@ function handleAuth() {
         return;
     }
 
-    if (user === MASTER_ADMIN) {
-        // Contraseña de administrador predefinida
-        if (pass !== "Sax_1995") {
-            alert('Contraseña de administrador incorrecta.');
+    if (isRegistering) {
+        if (user === MASTER_ADMIN) {
+            alert('Este nombre de usuario está reservado para el administrador.');
             return;
         }
 
-        // Forzar registro y aprobación automática del admin en localStorage
-        localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
-        localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
+        if (localStorage.getItem('app_user_' + user)) {
+            alert('El usuario ya existe. Intenta iniciar sesión.');
+            return;
+        }
+
+        const userData = { pass: pass, approved: false };
+        localStorage.setItem('app_user_' + user, JSON.stringify(userData));
+        alert('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.');
+        toggleMode();
+    } else {
+        if (user === MASTER_ADMIN) {
+            localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
+
+            if (pass !== "Sax_1995") {
+                alert('Contraseña de administrador incorrecta.');
+                return;
+            }
+
+            localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
+            checkSession();
+            location.reload();
+            return;
+        }
+
+        const rawData = localStorage.getItem('app_user_' + user);
+        if (!rawData) {
+            alert('Usuario o contraseña incorrectos.');
+            return;
+        }
+
+        let userData;
+        try {
+            userData = JSON.parse(rawData);
+        } catch (e) {
+            userData = { pass: rawData, approved: false };
+        }
+
+        if (userData.pass !== pass) {
+            alert('Usuario o contraseña incorrectos.');
+            return;
+        }
+
+        if (!userData.approved) {
+            alert('Tu cuenta aún no ha sido aprobada por el administrador.');
+            return;
+        }
+
+        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+        localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
+        
         checkSession();
         location.reload();
-        return;
     }
-
-    // Lógica para usuarios normales
-    const rawData = localStorage.getItem('app_user_' + user);
-    if (!rawData) {
-        alert('Usuario no registrado. Solicita al administrador que te registre.');
-        return;
-    }
-
-    const userData = JSON.parse(rawData);
-    if (userData.pass !== pass) {
-        alert('Contraseña incorrecta.');
-        return;
-    }
-
-    if (!userData.approved) {
-        alert('Tu cuenta aún no ha sido aprobada por el administrador.');
-        return;
-    }
-
-    const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
-    localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
-    checkSession();
-    location.reload();
 }
 
 function checkSession() {
@@ -1179,7 +1233,14 @@ function checkSession() {
         return;
     }
 
-    const session = JSON.parse(sessionData);
+    let session;
+    try {
+        session = JSON.parse(sessionData);
+    } catch (e) {
+        localStorage.removeItem('app_session');
+        authScreen.style.display = 'flex';
+        return;
+    }
 
     if (session.user === MASTER_ADMIN) {
         authScreen.style.display = 'none';
@@ -1196,7 +1257,6 @@ function checkSession() {
     }
 }
 
-// --- PANEL DE ADMINISTRACIÓN Y PERFIL ---
 function toggleAdminPanel() {
     const activeSession = JSON.parse(localStorage.getItem('app_session') || '{}');
 
@@ -1266,16 +1326,25 @@ function loadRegisteredUsers() {
             const username = key.replace('app_user_', '');
             if (username === MASTER_ADMIN) continue;
 
+            const rawData = localStorage.getItem(key);
+            let userData = {};
+            
+            try {
+                userData = JSON.parse(rawData);
+            } catch (e) {
+                userData = { pass: rawData, approved: false };
+                localStorage.setItem(key, JSON.stringify(userData));
+            }
+
             userCount++;
-            const userData = JSON.parse(localStorage.getItem(key) || '{}');
-            const isApproved = userData.approved;
+            const isApproved = userData.approved === true;
             
             const userRow = document.createElement('div');
-            userRow.className = 'flex justify-between items-center bg-white p-2.5 rounded-xl border shadow-sm';
+            userRow.className = 'flex justify-between items-center bg-white p-2.5 rounded-xl border shadow-sm my-1';
             userRow.innerHTML = `
                 <div>
                     <span class="font-medium text-slate-700 block text-xs"><i class="fa-solid fa-user text-xs mr-1 text-blue-500"></i>${username}</span>
-                    <span class="text-[10px] ${isApproved ? 'text-emerald-600 font-semibold' : 'text-amber-600'}">${isApproved ? 'Aprobado' : 'Pendiente de aprobación'}</span>
+                    <span class="text-[10px] ${isApproved ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-bold'}">${isApproved ? 'Aprobado' : 'Pendiente de aprobación'}</span>
                 </div>
                 <div class="flex gap-1.5">
                     ${!isApproved ? `<button onclick="approveUser('${username}')" class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg font-semibold hover:bg-emerald-100 transition">Aprobar</button>` : ''}
@@ -1294,7 +1363,12 @@ function loadRegisteredUsers() {
 function approveUser(username) {
     const rawData = localStorage.getItem('app_user_' + username);
     if (rawData) {
-        const userData = JSON.parse(rawData);
+        let userData = {};
+        try {
+            userData = JSON.parse(rawData);
+        } catch (e) {
+            userData = { pass: rawData, approved: false };
+        }
         userData.approved = true;
         localStorage.setItem('app_user_' + username, JSON.stringify(userData));
         loadRegisteredUsers();
@@ -1315,7 +1389,6 @@ function clearActiveSession() {
     }
 }
 
-// --- FUNCIONES DE LA APP ---
 function cleanKey(str) {
     if (!str) return "";
     return str.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1335,6 +1408,16 @@ async function loadSheetData() {
             console.warn("Advertencia al cargar coordenadas complementarias.");
         }
 
+        try {
+            const resOrigin = await fetch(SHEET_ORIGIN_URL);
+            if (resOrigin.ok) {
+                const textOrigin = await resOrigin.text();
+                originDictionary = parseOriginCSV(textOrigin);
+            }
+        } catch(e) {
+            console.warn("Advertencia al cargar la hoja de origen de usuarios.");
+        }
+
         const resMembers = await fetch(SHEET_MEMBERS_URL);
         if (!resMembers.ok) throw new Error("Error en respuesta de red");
 
@@ -1352,6 +1435,24 @@ async function loadSheetData() {
         const syncEl = document.getElementById('syncStatus');
         if (syncEl) syncEl.innerText = `Error de conexión`;
     }
+}
+
+function parseOriginCSV(text) {
+    const lines = text.split("\n");
+    const originMap = {};
+
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+        const rawName = cols[0] || "";
+        const originVal = cols[1] || "";
+        const key = cleanKey(rawName);
+
+        if (key) {
+            originMap[key] = originVal;
+        }
+    }
+    return originMap;
 }
 
 function parseCoordsCSV(text) {
@@ -1425,9 +1526,13 @@ function parseCSV(text, coordsMap) {
                 }
             }
 
+            const memberName = cols[1];
+            const memberKey = cleanKey(memberName);
+            const userOrigin = originDictionary[memberKey] || "N/D";
+
             membersList.push({
                 id: cols[0] || i,
-                name: cols[1],
+                name: memberName,
                 zone: cols[2] || "Beach & Yacht Club",
                 villa: rawVilla || "N/D",
                 photo: cols[4] && cols[4].startsWith('http') ? cols[4] : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -1435,7 +1540,8 @@ function parseCSV(text, coordsMap) {
                 lng: lngVal,
                 transport: cols[7] || "Sin preferencias especiales de transporte.", 
                 bellman: cols[8] || "Sin notas específicas para bellman.",          
-                phone: cols[9] || "N/A"                                            
+                phone: cols[9] || "N/A",
+                origin: userOrigin
             });
         }
     }
@@ -1551,6 +1657,7 @@ function focusOnMember(memberId) {
 
     setTimeout(() => {
         if (leafletMap) {
+            leafletMap.invalidateSize();
             leafletMap.setView([member.lat, member.lng], 18);
             if (mapMarkersMap[member.id]) {
                 mapMarkersMap[member.id].openPopup();
@@ -1762,6 +1869,10 @@ function initMap() {
 
     L.control.layers(baseLayers).addTo(leafletMap);
     updateMapMarkers(membersList);
+    
+    setTimeout(() => {
+        leafletMap.invalidateSize();
+    }, 200);
 }
 
 function updateMapMarkers(list) {
@@ -1772,7 +1883,7 @@ function updateMapMarkers(list) {
 
     list.forEach(member => {
         const marker = L.marker([member.lat, member.lng]).addTo(leafletMap);
-        marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>${member.zone}`);
+        marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>Origen: ${member.origin}<br>${member.zone}`);
         marker.on('click', () => openModal(member));
         mapMarkersMap[member.id] = marker;
     });
@@ -1792,7 +1903,7 @@ function openModal(member) {
 
     if(img) img.src = member.photo;
     if(name) name.innerText = member.name;
-    if(villa) villa.innerText = "Villa: " + member.villa;
+    if(villa) villa.innerText = "Villa: " + member.villa + " | Origen: " + member.origin;
     if(zone) zone.innerText = member.zone;
     if(transport) transport.innerText = member.transport;
     if(bellman) bellman.innerText = member.bellman;
