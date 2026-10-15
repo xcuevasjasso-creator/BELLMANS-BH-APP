@@ -1158,7 +1158,7 @@
 </html>
 
   <script>
-    // Lista de usuarios autorizados con contraseña genérica '123456'
+    const MASTER_ADMIN = "xasharitl";
 const AUTHORIZED_STAFF = [
     "romel", "luiscol", "esteban", "fernando", "ignacio", 
     "danielc", "francisco", "josel", "diego", "ulises", 
@@ -1166,27 +1166,30 @@ const AUTHORIZED_STAFF = [
 ];
 
 function handleAuth() {
-    const user = document.getElementById('auth-user').value.trim().toLowerCase();
-    const pass = document.getElementById('auth-pass').value.trim();
+    const userField = document.getElementById('auth-user');
+    const passField = document.getElementById('auth-pass');
+    
+    if (!userField || !passField) return;
+    
+    const user = userField.value.trim().toLowerCase();
+    const pass = passField.value.trim();
 
     if (!user || !pass) {
         alert('Por favor, completa todos los campos.');
         return;
     }
 
-    // 1. Validación para el Administrador Principal
     if (user === MASTER_ADMIN.toLowerCase()) {
         if (pass !== "Sax_1995") {
             alert('Contraseña de administrador incorrecta.');
             return;
         }
         localStorage.setItem('app_session', JSON.stringify({ user: MASTER_ADMIN, expiryTime: null }));
-        checkSession();
+        document.getElementById('auth-screen').style.display = 'none';
         location.reload();
         return;
     }
 
-    // 2. Validación para el Personal Autorizado (Contraseña única: 123456)
     if (AUTHORIZED_STAFF.includes(user)) {
         if (pass !== "123456") {
             alert('Contraseña incorrecta. Utiliza 123456');
@@ -1195,17 +1198,12 @@ function handleAuth() {
 
         const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
         localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
-        
-        checkSession();
+        document.getElementById('auth-screen').style.display = 'none';
         location.reload();
         return;
     }
 
     alert('Usuario no autorizado o incorrecto.');
-}
-
-function toggleMode() {
-    alert('El registro libre está desactivado. Utiliza tu usuario autorizado y contraseña asignada.');
 }
   </script>
 </body>
