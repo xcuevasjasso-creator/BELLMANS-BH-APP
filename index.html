@@ -81,19 +81,19 @@
 </head>
 <body class="bg-slate-950 flex items-center justify-center min-h-screen">
 
-    <!-- PANTALLA DE LOGIN / REGISTRO -->
+    <!-- PANTALLA DE LOGIN CON ACCESOS DIRECTOS -->
     <div id="auth-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-6 relative flex flex-col justify-between" style="max-height: 480px;">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 relative flex flex-col justify-between" style="max-height: 520px;">
             <div class="space-y-4">
                 <div class="text-center">
                     <h2 class="text-2xl font-bold text-slate-800">Costa Palmas</h2>
-                    <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Acceso Restringido - Inicia Sesión</p>
+                    <p class="text-xs text-slate-500 mt-1">Acceso Autorizado - Bellman & Transport</p>
                 </div>
 
                 <div class="space-y-3">
                     <div>
                         <label class="block text-[10px] font-semibold text-slate-600 mb-1">USUARIO</label>
-                        <input type="text" id="auth-user" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800" placeholder="Ingresa tu usuario">
+                        <input type="text" id="auth-user" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800" placeholder="Ej. xasharitl, francisco...">
                     </div>
                     <div>
                         <label class="block text-[10px] font-semibold text-slate-600 mb-1">CONTRASEÑA</label>
@@ -103,50 +103,34 @@
                     <button onclick="handleAuth()" id="auth-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md text-xs">
                         Iniciar Sesión
                     </button>
-                    
-                    <div class="text-center">
-                        <button onclick="toggleMode()" id="toggle-mode-btn" class="text-xs text-blue-600 hover:underline">
-                            ¿No tienes cuenta? Regístrate aquí
-                        </button>
-                    </div>
                 </div>
             </div>
 
             <div class="pt-3 border-t flex justify-between items-center text-[10px] text-slate-400">
-                <span>Seguridad activa</span>
+                <span>Acceso Seguro Local</span>
                 <span class="text-slate-500 font-medium">Costa Palmas Security</span>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DEL PANEL DE ADMINISTRACIÓN Y USUARIO -->
+    <!-- MODAL DEL PANEL DE OPERADOR -->
     <div id="admin-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4">
         <div class="bg-white text-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-lg">Panel de Usuario y Control</h3>
+                <h3 class="font-bold text-lg">Perfil de Operador</h3>
                 <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
             </div>
 
-            <div class="flex gap-2 border-b pb-2 text-xs">
-                <button onclick="switchAdminTab('users')" id="tab-users-btn" class="px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition">Gestionar Accesos</button>
-                <button onclick="switchAdminTab('profile')" id="tab-profile-btn" class="px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition">Mis Datos</button>
-            </div>
-
-            <div id="section-users" class="flex-1 overflow-y-auto space-y-2 py-1">
-                <p class="text-xs text-slate-500 mb-2">Valida o elimina las cuentas que solicitan acceso:</p>
-                <div id="admin-users-list" class="space-y-2 border rounded-xl p-3 bg-slate-50 text-sm max-h-48 overflow-y-auto"></div>
-            </div>
-
-            <div id="section-profile" class="hidden flex-1 space-y-3 py-1">
-                <p class="text-xs text-slate-500">Tus datos como Administrador:</p>
+            <div class="flex-1 space-y-3 py-1">
+                <p class="text-xs text-slate-500">Datos de la sesión activa:</p>
                 <div class="bg-slate-50 p-3 rounded-xl border space-y-2 text-xs">
                     <div>
-                        <label class="font-semibold text-slate-600">Nombre:</label>
-                        <input type="text" id="profile-name" value="Xasharitl Cuevas Jasso" class="w-full mt-1 p-2 bg-white border rounded-lg text-slate-800">
+                        <label class="font-semibold text-slate-600">Usuario Actual:</label>
+                        <input type="text" id="profile-user" readonly class="w-full mt-1 p-2 bg-slate-200 border rounded-lg text-slate-700 font-medium">
                     </div>
                     <div>
-                        <label class="font-semibold text-slate-600">Departamento / Puesto:</label>
-                        <input type="text" id="profile-dept" value="Security & Bellman Department" class="w-full mt-1 p-2 bg-white border rounded-lg text-slate-800">
+                        <label class="font-semibold text-slate-600">Nombre Completo / Puesto:</label>
+                        <input type="text" id="profile-name" class="w-full mt-1 p-2 bg-white border rounded-lg text-slate-800">
                     </div>
                     <button onclick="saveProfileData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">Guardar Cambios</button>
                 </div>
@@ -191,7 +175,7 @@
                     <button onclick="toggleDarkMode()" id="darkModeBtn" class="w-9 h-9 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center text-sm border border-blue-600 transition-colors text-white" title="Cambiar Modo">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <button onclick="toggleAdminPanel()" class="w-10 h-10 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center font-bold border border-blue-600 text-sm transition-colors text-white shadow-sm" title="Panel de Usuario">
+                    <button onclick="toggleAdminPanel()" id="userBadgeBtn" class="w-10 h-10 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center font-bold border border-blue-600 text-xs transition-colors text-white shadow-sm" title="Panel de Operador">
                         XC
                     </button>
                 </div>
@@ -353,6 +337,18 @@
         const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
         const SHEET_ORIGIN_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1281819744";
 
+        // Lista de usuarios autorizados
+        const VALID_USERS = {
+            "xasharitl": "123456",
+            "francisco": "123456",
+            "esteban": "123456",
+            "fernando": "123456",
+            "ignacio": "123456",
+            "mozza": "123456",
+            "delphine": "123456",
+            "danielc": "123456"
+        };
+
         let membersList = [];
         let originDictionary = {};
         let leafletMap = null;
@@ -361,249 +357,69 @@
         let currentLogCat = 'Paquetería';
         let isDarkMode = false;
 
-        const MASTER_ADMIN = "xasharitl";
-        let isRegistering = false;
-
-        function toggleMode() {
-            isRegistering = !isRegistering;
-            document.getElementById('auth-subtitle').innerText = isRegistering ? 'Crea tu cuenta de acceso' : 'Acceso Restringido - Inicia Sesión';
-            document.getElementById('auth-btn').innerText = isRegistering ? 'Registrarse' : 'Iniciar Sesión';
-            document.getElementById('toggle-mode-btn').innerText = isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
-        }
-
         function handleAuth() {
-            const user = document.getElementById('auth-user').value.trim();
+            const user = document.getElementById('auth-user').value.trim().toLowerCase();
             const pass = document.getElementById('auth-pass').value.trim();
 
             if (!user || !pass) {
-                alert('Por favor, completa todos los campos.');
+                alert('Por favor, ingresa tu usuario y contraseña.');
                 return;
             }
 
-            if (isRegistering) {
-                if (user === MASTER_ADMIN) {
-                    alert('Este nombre de usuario está reservado para el administrador.');
-                    return;
-                }
-
-                if (localStorage.getItem('app_user_' + user)) {
-                    alert('El usuario ya existe. Intenta iniciar sesión.');
-                    return;
-                }
-
-                const userData = { pass: pass, approved: false };
-                localStorage.setItem('app_user_' + user, JSON.stringify(userData));
-                alert('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.');
-                toggleMode();
-            } else {
-                if (user === MASTER_ADMIN) {
-                    localStorage.setItem('app_user_' + user, JSON.stringify({ pass: "Sax_1995", approved: true }));
-
-                    if (pass !== "Sax_1995") {
-                        alert('Contraseña de administrador incorrecta.');
-                        return;
-                    }
-
-                    localStorage.setItem('app_session', JSON.stringify({ user, expiryTime: null }));
-                    checkSession();
-                    location.reload();
-                    return;
-                }
-
-                const rawData = localStorage.getItem('app_user_' + user);
-                if (!rawData) {
-                    alert('Usuario o contraseña incorrectos.');
-                    return;
-                }
-
-                let userData;
-                try {
-                    userData = JSON.parse(rawData);
-                } catch (e) {
-                    userData = { pass: rawData, approved: false };
-                }
-
-                if (userData.pass !== pass) {
-                    alert('Usuario o contraseña incorrectos.');
-                    return;
-                }
-
-                if (!userData.approved) {
-                    alert('Tu cuenta aún no ha sido aprobada por el administrador.');
-                    return;
-                }
-
-                const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
-                localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
-                
+            if (VALID_USERS[user] && VALID_USERS[user] === pass) {
+                localStorage.setItem('cp_logged_user', user);
                 checkSession();
-                location.reload();
+            } else {
+                alert('Usuario o contraseña incorrectos.');
             }
         }
 
         function checkSession() {
-            const sessionData = localStorage.getItem('app_session');
+            const loggedUser = localStorage.getItem('cp_logged_user');
             const authScreen = document.getElementById('auth-screen');
+            const badgeBtn = document.getElementById('userBadgeBtn');
 
-            if (!sessionData) {
-                authScreen.style.display = 'flex';
-                return;
-            }
-
-            let session;
-            try {
-                session = JSON.parse(sessionData);
-            } catch (e) {
-                localStorage.removeItem('app_session');
-                authScreen.style.display = 'flex';
-                return;
-            }
-
-            if (session.user === MASTER_ADMIN) {
-                authScreen.style.display = 'none';
-                return;
-            }
-
-            const currentTime = new Date().getTime();
-            if (session.expiryTime && currentTime > session.expiryTime) {
-                alert('Tu sesión de 24 horas ha expirado. Por favor, inicia sesión nuevamente.');
-                localStorage.removeItem('app_session');
+            if (!loggedUser || !VALID_USERS[loggedUser]) {
                 authScreen.style.display = 'flex';
             } else {
                 authScreen.style.display = 'none';
+                if (badgeBtn) {
+                    badgeBtn.innerText = loggedUser.substring(0, 2).toUpperCase();
+                }
             }
         }
 
         function toggleAdminPanel() {
-            const activeSession = JSON.parse(localStorage.getItem('app_session') || '{}');
-
-            if (activeSession.user !== MASTER_ADMIN) {
-                const inputAdminPass = prompt("Esta sección es exclusiva para el administrador. Ingresa tu contraseña:");
-                const adminData = JSON.parse(localStorage.getItem('app_user_' + MASTER_ADMIN) || '{}');
-                
-                if (!inputAdminPass || inputAdminPass !== (adminData.pass || "Sax_1995")) {
-                    alert('Acceso denegado.');
-                    return;
-                }
-            }
-
             const modal = document.getElementById('admin-modal');
             const isHidden = modal.classList.contains('hidden');
             
             if (isHidden) {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                switchAdminTab('users');
+                
+                const currentUser = localStorage.getItem('cp_logged_user') || 'xasharitl';
+                document.getElementById('profile-user').value = currentUser;
+
+                const savedProfile = JSON.parse(localStorage.getItem('cp_profile_' + currentUser) || '{}');
+                document.getElementById('profile-name').value = savedProfile.name || (currentUser.toUpperCase() + ' - Bellman & Security PM');
             } else {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
             }
         }
 
-        function switchAdminTab(tab) {
-            const usersSec = document.getElementById('section-users');
-            const profileSec = document.getElementById('section-profile');
-            const btnUsers = document.getElementById('tab-users-btn');
-            const btnProfile = document.getElementById('tab-profile-btn');
-
-            if (tab === 'users') {
-                usersSec.classList.remove('hidden');
-                profileSec.classList.add('hidden');
-                btnUsers.className = "px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition";
-                btnProfile.className = "px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition";
-                loadRegisteredUsers();
-            } else {
-                usersSec.classList.add('hidden');
-                profileSec.classList.remove('hidden');
-                btnProfile.className = "px-3 py-1.5 rounded-lg bg-blue-600 font-semibold text-white transition";
-                btnUsers.className = "px-3 py-1.5 rounded-lg bg-slate-100 font-semibold text-slate-600 transition";
-                
-                const savedProfile = JSON.parse(localStorage.getItem('admin_profile') || '{}');
-                if (savedProfile.name) document.getElementById('profile-name').value = savedProfile.name;
-                if (savedProfile.dept) document.getElementById('profile-dept').value = savedProfile.dept;
-            }
-        }
-
         function saveProfileData() {
+            const currentUser = localStorage.getItem('cp_logged_user');
             const name = document.getElementById('profile-name').value.trim();
-            const dept = document.getElementById('profile-dept').value.trim();
             
-            localStorage.setItem('admin_profile', JSON.stringify({ name, dept }));
+            localStorage.setItem('cp_profile_' + currentUser, JSON.stringify({ name }));
             alert('¡Datos guardados exitosamente!');
-        }
-
-        function loadRegisteredUsers() {
-    const listContainer = document.getElementById('admin-users-list');
-    if (!listContainer) return;
-    
-    listContainer.innerHTML = '';
-    let userCount = 0;
-
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('app_user_')) {
-            const username = key.replace('app_user_', '');
-            if (username === MASTER_ADMIN) continue;
-
-            const rawData = localStorage.getItem(key);
-            let userData = {};
-            
-            try {
-                userData = JSON.parse(rawData);
-            } catch (e) {
-                userData = { pass: rawData, approved: false };
-                localStorage.setItem(key, JSON.stringify(userData));
-            }
-
-            userCount++;
-            const isApproved = userData.approved === true;
-            
-            const userRow = document.createElement('div');
-            userRow.className = 'flex justify-between items-center bg-white p-2.5 rounded-xl border shadow-sm my-1';
-            userRow.innerHTML = `
-                <div>
-                    <span class="font-medium text-slate-700 block text-xs"><i class="fa-solid fa-user text-xs mr-1 text-blue-500"></i>${username}</span>
-                    <span class="text-[10px] ${isApproved ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-bold'}">${isApproved ? 'Aprobado' : 'Pendiente de aprobación'}</span>
-                </div>
-                <div class="flex gap-1.5">
-                    ${!isApproved ? `<button onclick="approveUser('${username}')" class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg font-semibold hover:bg-emerald-100 transition">Aprobar</button>` : ''}
-                    <button onclick="deleteUser('${username}')" class="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg font-semibold hover:bg-red-100 transition">Eliminar</button>
-                </div>
-            `;
-            listContainer.appendChild(userRow);
-        }
-    }
-
-    if (userCount === 0) {
-        listContainer.innerHTML = `<p class="text-center text-slate-400 py-6 text-xs">No hay usuarios registrados esperando validación.</p>`;
-    }
-}
-
-        function approveUser(username) {
-            const rawData = localStorage.getItem('app_user_' + username);
-            if (rawData) {
-                let userData = {};
-                try {
-                    userData = JSON.parse(rawData);
-                } catch (e) {
-                    userData = { pass: rawData, approved: false };
-                }
-                userData.approved = true;
-                localStorage.setItem('app_user_' + username, JSON.stringify(userData));
-                loadRegisteredUsers();
-            }
-        }
-
-        function deleteUser(username) {
-            if (confirm(`¿Estás seguro de eliminar el acceso para el usuario "${username}"?`)) {
-                localStorage.removeItem('app_user_' + username);
-                loadRegisteredUsers();
-            }
+            toggleAdminPanel();
         }
 
         function clearActiveSession() {
             if (confirm('¿Deseas cerrar la sesión activa?')) {
-                localStorage.removeItem('app_session');
+                localStorage.removeItem('cp_logged_user');
                 location.reload();
             }
         }
@@ -1051,7 +867,7 @@
                         initMap();
                     } else {
                         leafletMap.invalidateSize();
-                    }F
+                    }
                 }, 100);
             } else if(tab === 'logbook') {
                 if(logView) logView.classList.remove('hidden');
@@ -1158,53 +974,7 @@
 </html>
 
   <script>
-    const MASTER_ADMIN = "xasharitl";
-const AUTHORIZED_STAFF = [
-    "romel", "luiscol", "esteban", "fernando", "ignacio", 
-    "danielc", "francisco", "josel", "diego", "ulises", 
-    "juancarlos", "bellman1", "bellman2", "bellman3", "bellman4", "bellman5"
-];
-
-function handleAuth() {
-    const userField = document.getElementById('auth-user');
-    const passField = document.getElementById('auth-pass');
     
-    if (!userField || !passField) return;
-    
-    const user = userField.value.trim().toLowerCase();
-    const pass = passField.value.trim();
-
-    if (!user || !pass) {
-        alert('Por favor, completa todos los campos.');
-        return;
-    }
-
-    if (user === MASTER_ADMIN.toLowerCase()) {
-        if (pass !== "Sax_1995") {
-            alert('Contraseña de administrador incorrecta.');
-            return;
-        }
-        localStorage.setItem('app_session', JSON.stringify({ user: MASTER_ADMIN, expiryTime: null }));
-        document.getElementById('auth-screen').style.display = 'none';
-        location.reload();
-        return;
-    }
-
-    if (AUTHORIZED_STAFF.includes(user)) {
-        if (pass !== "123456") {
-            alert('Contraseña incorrecta. Utiliza 123456');
-            return;
-        }
-
-        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
-        localStorage.setItem('app_session', JSON.stringify({ user, expiryTime }));
-        document.getElementById('auth-screen').style.display = 'none';
-        location.reload();
-        return;
-    }
-
-    alert('Usuario no autorizado o incorrecto.');
-}
   </script>
 </body>
 </html>
