@@ -233,53 +233,47 @@
                 <div id="leaflet-map" class="w-full h-full"></div>
             </div>
 
-            <!-- VISTA 3: MAPA OPERATIVO SVG Y SECTORES -->
-            <div id="view-map-svg" class="hidden p-3 flex flex-col items-center justify-start pb-28 w-full">
-                <div class="w-full max-w-xl flex flex-col gap-2.5">
-                    
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-2 shadow-xl flex flex-col items-center">
-                        <div class="map-container rounded-xl overflow-hidden bg-slate-950 border border-slate-800 relative">
-                            
-                            <img id="mapImage" src="https://lh3.googleusercontent.com/d/18ATCCK_U9Gm-XyPkiipc7wgZeStHkQs0=w1600" 
-                                 alt="Mapa Satelital Costa Palmas" class="w-full h-auto block object-contain select-none pointer-events-none"
-                                 onerror="this.onerror=null; this.src='https://placehold.co/1000x1000/0f172a/38bdf8?text=Costa+Palmas+Mapa';">
+            <!-- VISTA 3: MAPA OPERATIVO SVG Y SECTORES (SIN MARCO EXTREMO) -->
+            <div id="view-map-svg" class="hidden px-2 pt-2 flex flex-col items-center justify-start pb-32 w-full">
+                <div class="w-full max-w-xl flex flex-col items-center">
+                    <div class="map-container w-full overflow-hidden relative">
+                        <img id="mapImage" src="https://lh3.googleusercontent.com/d/18ATCCK_U9Gm-XyPkiipc7wgZeStHkQs0=w1600" 
+                             alt="Mapa Satelital Costa Palmas" class="w-full h-auto block object-contain select-none pointer-events-none"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1000x1000/0f172a/38bdf8?text=Costa+Palmas+Mapa';">
 
-                            <svg id="svgOverlay" viewBox="0 0 1000 1000" class="absolute top-0 left-0 w-full h-full">
-                                <polygon id="poly-sec-1" points="449,926 321,1019 268,997 250,697 495,450 622,498 546,745 500,740 423,808" class="sector-polygon sec-1" onclick="selectSector('sec-1')"></polygon>
-                                <polygon id="poly-sec-2" points="598,161 792,271 996,312 978,438 723,492 657,444 624,265" class="sector-polygon sec-2" onclick="selectSector('sec-2')"></polygon>
-                                <polygon id="poly-sec-3" points="575,299 645,341 656,477 614,492 398,424 398,329" class="sector-polygon sec-3" onclick="selectSector('sec-3')"></polygon>
-                                <polygon id="poly-sec-4" points="164,372 281,80 569,130 576,298 398,329 399,422" class="sector-polygon sec-4" onclick="selectSector('sec-4')"></polygon>
-                                <polygon id="poly-sec-aman" points="63,54 282,80 163,372 15,346 20,200" class="sector-polygon sec-aman" onclick="selectSector('sec-aman')"></polygon>
+                        <svg id="svgOverlay" viewBox="0 0 1000 1000" class="absolute top-0 left-0 w-full h-full">
+                            <polygon id="poly-sec-1" points="449,926 321,1019 268,997 250,697 495,450 622,498 546,745 500,740 423,808" class="sector-polygon sec-1" onclick="selectSector('sec-1')"></polygon>
+                            <polygon id="poly-sec-2" points="598,161 792,271 996,312 978,438 723,492 657,444 624,265" class="sector-polygon sec-2" onclick="selectSector('sec-2')"></polygon>
+                            <polygon id="poly-sec-3" points="575,299 645,341 656,477 614,492 398,424 398,329" class="sector-polygon sec-3" onclick="selectSector('sec-3')"></polygon>
+                            <polygon id="poly-sec-4" points="164,372 281,80 569,130 576,298 398,329 399,422" class="sector-polygon sec-4" onclick="selectSector('sec-4')"></polygon>
+                            <polygon id="poly-sec-aman" points="63,54 282,80 163,372 15,346 20,200" class="sector-polygon sec-aman" onclick="selectSector('sec-aman')"></polygon>
 
-                                <g id="accessGroup">
-                                    <g class="access-hitbox" transform="translate(385, 910)" onclick="selectAccess(1)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(535, 715)" onclick="selectAccess(2)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(595, 515)" onclick="selectAccess(3)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(535, 495)" onclick="selectAccess(4)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(915, 460)" onclick="selectAccess(5)"><circle class="pin-marker" r="16" fill="#3b82f6" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(750, 485)" onclick="selectAccess(6)"><circle class="pin-marker" r="16" fill="#3b82f6" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(620, 475)" onclick="selectAccess(7)"><circle class="pin-marker" r="16" fill="#eab308" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(555, 470)" onclick="selectAccess(8)"><circle class="pin-marker" r="16" fill="#eab308" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(370, 410)" onclick="selectAccess(9)"><circle class="pin-marker" r="16" fill="#f97316" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(160, 380)" onclick="selectAccess(10)"><circle class="pin-marker" r="16" fill="#a855f7" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                    <g class="access-hitbox" transform="translate(20, 360)" onclick="selectAccess(11)"><circle class="pin-marker" r="16" fill="#a855f7" opacity="0.4"/><circle r="22" fill="transparent"/></g>
-                                </g>
-                            </svg>
-                        </div>
-
-                        <!-- Texto limpio sin la frase innecesaria -->
-                        <div class="mt-2 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-hand-pointer text-amber-400"></i>
-                            <span>Toca cualquier sector</span>
-                        </div>
+                            <g id="accessGroup">
+                                <g class="access-hitbox" transform="translate(385, 910)" onclick="selectAccess(1)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(535, 715)" onclick="selectAccess(2)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(595, 515)" onclick="selectAccess(3)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(535, 495)" onclick="selectAccess(4)"><circle class="pin-marker" r="16" fill="#22c55e" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(915, 460)" onclick="selectAccess(5)"><circle class="pin-marker" r="16" fill="#3b82f6" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(750, 485)" onclick="selectAccess(6)"><circle class="pin-marker" r="16" fill="#3b82f6" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(620, 475)" onclick="selectAccess(7)"><circle class="pin-marker" r="16" fill="#eab308" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(555, 470)" onclick="selectAccess(8)"><circle class="pin-marker" r="16" fill="#eab308" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(370, 410)" onclick="selectAccess(9)"><circle class="pin-marker" r="16" fill="#f97316" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(160, 380)" onclick="selectAccess(10)"><circle class="pin-marker" r="16" fill="#a855f7" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                                <g class="access-hitbox" transform="translate(20, 360)" onclick="selectAccess(11)"><circle class="pin-marker" r="16" fill="#a855f7" opacity="0.4"/><circle r="22" fill="transparent"/></g>
+                            </g>
+                        </svg>
                     </div>
 
+                    <div class="mt-2 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-hand-pointer text-amber-400"></i>
+                        <span>Toca cualquier sector</span>
+                    </div>
                 </div>
             </div>
 
         </main>
 
-        <!-- BARRA INFERIOR FIJA PARA SECTORES Y CANALES DE RADIO (SIN SCROLL) -->
+        <!-- BARRA INFERIOR FIJA PARA SECTORES, RADIOS Y EMERGENCIA -->
         <div id="sectorBottomBar" class="hidden fixed bottom-16 inset-x-0 bg-slate-900/95 border-t border-slate-800 p-2 z-20 shadow-xl backdrop-blur">
             <div class="max-w-xl mx-auto flex flex-col gap-1.5">
                 <div class="grid grid-cols-5 gap-1 text-[11px]">
@@ -289,10 +283,16 @@
                     <button onclick="selectSector('sec-4')" class="py-2 px-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-center truncate">Sec. 4</button>
                     <button onclick="selectSector('sec-aman')" class="py-2 px-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-center truncate">Amán</button>
                 </div>
-                <button onclick="openRadiosModal()" class="w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow text-xs flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-walkie-talkie text-base"></i>
-                    <span>Canales de Radio Oficiales</span>
-                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="openRadiosModal()" class="w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-walkie-talkie text-base"></i>
+                        <span>Canales de Radio</span>
+                    </button>
+                    <button onclick="openEmergencyModal()" class="w-full py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-phone-volume text-base"></i>
+                        <span>Emergencias</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -314,12 +314,7 @@
 
     </div>
 
-    <!-- BOTÓN FLOTANTE DE EMERGENCIA -->
-    <button onclick="openEmergencyModal()" class="fixed bottom-20 right-5 z-40 bg-rose-600 hover:bg-rose-500 text-white p-3 rounded-full shadow-2xl flex items-center justify-center gap-2 font-bold text-xs border-2 border-rose-400/50 animate-bounce transition">
-        <i class="fa-solid fa-phone-volume text-base"></i>
-    </button>
-
-    <!-- MODAL DE DETALLE DE RESIDENTE (OPTIMIZADO SIN SCROLL) -->
+    <!-- MODAL DE DETALLE DE RESIDENTE -->
     <div id="detailModal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-end justify-center">
         <div id="modalContentBox" class="bg-slate-900 text-white w-full max-w-lg rounded-t-3xl p-4 sm:p-5 flex flex-col gap-3 animate-slide-up max-h-[85vh] overflow-y-auto border-t border-slate-800 shadow-2xl">
             <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto"></div>
@@ -337,7 +332,6 @@
             </div>
 
             <div class="border-t border-slate-800 pt-2.5 flex flex-col gap-2 text-xs">
-                <!-- Folio Opera / Hotel -->
                 <div class="flex items-center justify-between bg-amber-950/40 border border-amber-800/60 p-2.5 rounded-xl">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-hotel text-amber-400"></i>
@@ -463,7 +457,7 @@
         </div>
     </div>
 
-    <!-- BOTTOM SHEET (Hoja Inferior para Sectores con pestañas más grandes) -->
+    <!-- BOTTOM SHEET (Hoja Inferior para Sectores) -->
     <div id="bottomSheet" class="bottom-sheet fixed inset-x-0 bottom-0 z-40 bg-slate-800 border-t border-slate-700 rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col">
         <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeBottomSheet()">
             <div class="w-10 h-1 bg-slate-600 rounded-full"></div>
@@ -480,7 +474,6 @@
             </button>
         </div>
 
-        <!-- Pestañas grandes y táctiles -->
         <div class="grid grid-cols-3 border-b border-slate-700/60 bg-slate-900/60 p-1.5 text-xs gap-1">
             <button onclick="switchSectorTab('general')" id="tabBtn-general" class="tab-btn py-2 px-2 font-bold text-amber-400 bg-slate-800 rounded-xl text-center shadow transition">General</button>
             <button onclick="switchSectorTab('infrastructure')" id="tabBtn-infrastructure" class="tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition">Bodegas / Villas</button>
@@ -516,7 +509,6 @@
         let mapMarkersMap = {};
         let currentZoneFilter = 'all';
 
-        // Mapeo Opera / Hotel basado en el archivo RSM.pdf
         const OPERA_MAPPING = {
             "R1-11": "4011", "R1-12": "4012", "R1-21": "4021", "R1-22": "4022", "R1-31": "4031", "R1-32": "4032",
             "R2-11": "4211", "R2-12": "4212", "R2-13": "4213", "R2-14": "4214", "R2-15": "4215", "R2-16": "4216",
@@ -970,7 +962,6 @@
             });
         }
 
-        // Datos enriquecidos de Sectores con la infraestructura y restaurantes actualizados
         const CostaPalmasData = {
             'sec-1': {
                 name: "Sector 1 — Infraestructura y Servicios",
@@ -1099,7 +1090,6 @@
         function switchSectorTab(tabName) {
             activeSectorTab = tabName;
             
-            // Actualizar estilo visual de los botones de pestañas grandes
             ['general', 'infrastructure', 'access'].forEach(t => {
                 const btn = document.getElementById(`tabBtn-${t}`);
                 if (btn) {
