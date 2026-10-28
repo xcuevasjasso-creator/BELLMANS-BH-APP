@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JSFiddle ar29xj0m</title>
+  <title>JSFiddle 6L4u8npx</title>
 
   <style>
     
@@ -204,14 +204,14 @@
         <!-- CONTENIDO PRINCIPAL -->
         <main class="flex-1 overflow-y-auto relative flex flex-col no-scrollbar w-full max-w-4xl mx-auto">
             
-            <!-- VISTA 1: DIRECTORIO DE RESIDENTES (2 COLUMNAS) -->
+            <!-- VISTA 1: DIRECTORIO DE RESIDENTES -->
             <div id="view-directory" class="flex flex-col w-full pb-24">
                 <div class="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-md px-4 pt-3 pb-3 space-y-2.5 border-b border-slate-900 shadow-lg">
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="searchInput" placeholder="Buscar por nombre, villa o zona (ej. OV-, R7)..." 
+                        <input type="text" id="searchInput" placeholder="Buscar por nombre, villa, zona o Folio Opera..." 
                             class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm text-white placeholder-slate-500"
                             oninput="filterDirectory()">
                     </div>
@@ -233,7 +233,7 @@
                 <div id="leaflet-map" class="w-full h-full"></div>
             </div>
 
-            <!-- VISTA 3: MAPA OPERATIVO SVG Y SECTORES (SIN MARCO EXTREMO) -->
+            <!-- VISTA 3: MAPA OPERATIVO SVG Y SECTORES -->
             <div id="view-map-svg" class="hidden px-2 pt-2 flex flex-col items-center justify-start pb-32 w-full">
                 <div class="w-full max-w-xl flex flex-col items-center">
                     <div class="map-container w-full overflow-hidden relative">
@@ -798,7 +798,20 @@
             container.innerHTML = '';
 
             if(list.length === 0) {
-                container.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-500 text-sm">No se encontraron registros</div>`;
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-12 px-4 space-y-3 bg-slate-900/50 rounded-2xl border border-slate-800 my-4 shadow-inner">
+                        <div class="w-12 h-12 bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg border border-slate-700">
+                            <i class="fa-solid fa-user-slash"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-sm">Sin resultados</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">No se encontró coincidencia por nombre, villa, zona o Folio Opera.</p>
+                        </div>
+                        <button onclick="clearSearch()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow">
+                            Limpiar búsqueda
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
@@ -844,14 +857,28 @@
             applyFilters();
         }
 
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            if (input) {
+                input.value = '';
+                applyFilters();
+            }
+        }
+
         function applyFilters() {
             const searchEl = document.getElementById('searchInput');
-            const query = searchEl ? searchEl.value.toLowerCase() : '';
+            const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
             
             const filtered = membersList.filter(m => {
-                const matchesSearch = m.name.toLowerCase().includes(query) || 
-                                      m.villa.toLowerCase().includes(query) || 
-                                      m.zone.toLowerCase().includes(query);
+                const name = (m.name || '').toLowerCase();
+                const villa = (m.villa || '').toLowerCase();
+                const zone = (m.zone || '').toLowerCase();
+                const opera = (m.opera || '').toLowerCase();
+
+                const matchesSearch = name.includes(query) || 
+                                      villa.includes(query) || 
+                                      zone.includes(query) || 
+                                      opera.includes(query);
                 
                 let matchesZone = true;
                 if (currentZoneFilter !== 'all') {
@@ -1220,7 +1247,79 @@
 </html>
 
   <script>
-    
+    async function handleAuth() {
+    const userInput = document.getElementById('auth-user').value.trim().toLowerCase();
+    const passInput = document.getElementById('auth-pass').value.trim();
+    const authBtn = document.getElementById('auth-btn');
+
+    if (!userInput || !passInput) {
+        alert('Por favor, ingresa tu usuario y contraseña.');
+        return;
+    }
+
+    authBtn.innerText = "Verificando acceso...";
+    authBtn.disabled = true;
+
+    // Respaldo local con todos tus operadores autorizados (Garantiza acceso instantáneo en celular)
+    const localUsers = {
+        "xasharitl": "123456",
+        "francisco": "123456",
+        "esteban": "123456",
+        "fernando": "123456",
+        "ignacio": "123456",
+        "mozza": "123456",
+        "delphine": "123456",
+        "danielc": "123456",
+        "juanc": "123456",
+        "josel": "123456",
+        "ulises": "123456",
+        "diego": "123456",
+        "dorman": "123456"
+    };
+
+    // Validación local directa (Evita el bloqueo CORS en dispositivos móviles)
+    if (localUsers[userInput] && localUsers[userInput] === passInput) {
+        localStorage.setItem('cp_logged_user', userInput);
+        checkSession();
+        return;
+    }
+
+    // Si por alguna razón se usa un usuario nuevo, intenta consultar el Excel
+    try {
+        const resOrigin = await fetch(SHEET_ORIGIN_URL);
+        if (!resOrigin.ok) throw new Error("Error de red");
+        
+        const textOrigin = await resOrigin.text();
+        const lines = textOrigin.split("\n");
+        let authenticated = false;
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cols = parseCSVLine(lines[i]);
+            const excelUser = (cols[0] || "").trim().toLowerCase();
+            const excelPass = (cols[1] || "").trim();
+
+            if (excelUser === userInput && excelPass === passInput) {
+                authenticated = true;
+                break;
+            }
+        }
+
+        if (authenticated) {
+            localStorage.setItem('cp_logged_user', userInput);
+            checkSession();
+        } else {
+            alert('Usuario o contraseña incorrectos.');
+            authBtn.innerText = "Iniciar Sesión";
+            authBtn.disabled = false;
+        }
+    } catch (error) {
+        console.warn("Fallo de red o CORS con la nube:", error);
+        alert('⚠️ Usuario o contraseña incorrectos, o error de conexión con la nube.');
+        authBtn.innerText = "Iniciar Sesión";
+        authBtn.disabled = false;
+    }
+}
   </script>
 </body>
 </html>
