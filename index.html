@@ -19,7 +19,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Costa Palmas — Dashboard Operativo</title>
+    <title>Costa Palmas — Dashboard Operativo Pro</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -89,6 +89,7 @@
             r: 18 !important;
         }
 
+        /* Bottom Sheet con área de arrastre aislada a la barra superior */
         .bottom-sheet {
             transform: translateY(100%);
             transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -97,16 +98,19 @@
             transform: translateY(0);
         }
 
-        /* --- ESTÉTICA CLÁSICA AZUL OSCURO Y VIDRIO ESMERILADO --- */
+        .sheet-drag-handle {
+            touch-action: none;
+        }
+
+        /* Estética Clásica Azul Oscuro y Vidrio Esmerilado */
         .glass-panel {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.18);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        /* Animaciones escalonadas fluidas (Staggered Fade-in-up) */
         @keyframes fadeInUpPro {
             0% { opacity: 0; transform: translateY(14px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -117,7 +121,6 @@
             opacity: 0;
         }
 
-        /* Micro-interacciones táctiles */
         .interactive-card {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -130,7 +133,6 @@
             transform: translateY(-2px);
         }
 
-        /* Esqueleto de carga (Shimmer) */
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -184,11 +186,11 @@
     </div>
 
     <!-- MODAL PERFIL DE OPERADOR -->
-    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4" onclick="if(event.target === this) toggleAdminPanel()">
         <div class="glass-panel text-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col border border-slate-800">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-bold text-lg text-white">Perfil de Operador</h3>
-                <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-white font-bold text-xl">&times;</button>
+                <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-white font-bold text-xl px-2">&times;</button>
             </div>
             <div class="flex-1 space-y-3 py-1">
                 <p class="text-xs text-slate-400">Datos de la sesión activa:</p>
@@ -219,7 +221,7 @@
     <div id="appContainer" class="flex flex-col h-full w-full bg-slate-950 text-slate-100 relative overflow-hidden">
         
         <!-- ENCABEZADO UNIFICADO -->
-        <header id="appHeader" class="glass-panel text-white p-3.5 shadow-xl shrink-0 z-30 border-b border-slate-800/80">
+        <header id="appHeader" class="glass-panel text-white p-3.5 shadow-xl shrink-0 z-30 border-b border-slate-800/85">
             <div class="flex justify-between items-center max-w-4xl mx-auto w-full">
                 <div class="flex items-center gap-3">
                     <div id="companyLogoContainer" class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-600/20 font-bold text-white text-lg tracking-wider font-serif overflow-hidden shrink-0 border border-blue-400/40">
@@ -246,12 +248,13 @@
             
             <!-- VISTA 1: DIRECTORIO DE RESIDENTES -->
             <div id="view-directory" class="flex flex-col w-full pb-24">
-                <div class="sticky top-0 z-10 bg-slate-950/90 backdrop-blur-xl px-4 pt-3 pb-3 space-y-2.5 border-b border-slate-900 shadow-lg">
+                <!-- Barra de Búsqueda Flotante Inteligente -->
+                <div class="sticky top-0 z-20 bg-slate-950/85 backdrop-blur-xl px-4 pt-3 pb-3 space-y-2.5 border-b border-slate-900/80 shadow-lg transition-all">
                     <div class="relative flex items-center">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="searchInput" placeholder="Buscar por nombre, villa, zona o Folio Opera (ej. r216)..." 
+                        <input type="text" id="searchInput" placeholder="Buscar por nombre, villa, zona o Folio Opera..." 
                             class="w-full pl-10 pr-9 py-2.5 glass-panel border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner text-white placeholder-slate-500 transition-all"
                             oninput="filterDirectory()">
                         <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-3 text-slate-500 hover:text-slate-300 hidden p-1 transition-colors" title="Borrar búsqueda">
@@ -259,13 +262,19 @@
                         </button>
                     </div>
 
-                    <!-- BARRA DE FILTROS DINÁMICA -->
-                    <div id="zoneFiltersContainer" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs">
-                        <button class="px-3.5 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-md shadow-blue-600/20">Todas</button>
+                    <!-- Controles: Filtros Dinámicos + Alternador de Vista (Tarjetas vs Lista Compacta) -->
+                    <div class="flex items-center justify-between gap-2">
+                        <div id="zoneFiltersContainer" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs flex-1">
+                            <button class="px-3.5 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-md shadow-blue-600/20">Todas</button>
+                        </div>
+                        <button onclick="toggleViewMode()" id="viewModeBtn" class="px-3 py-1.5 rounded-xl glass-panel border border-slate-800 text-xs text-blue-400 font-semibold shrink-0 flex items-center gap-1.5 interactive-card shadow-sm" title="Alternar Vista">
+                            <i id="viewModeIcon" class="fa-solid fa-list"></i>
+                            <span id="viewModeText" class="hidden sm:inline">Lista</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Lista con Esqueletos de Carga iniciales -->
+                <!-- Lista de Residentes -->
                 <div id="residentList" class="grid grid-cols-2 gap-3 p-4">
                     <div class="col-span-2 grid grid-cols-2 gap-3">
                         <div class="skeleton-loader h-44 rounded-2xl"></div>
@@ -407,7 +416,7 @@
     </div>
 
     <!-- MODAL MAPA GPS -->
-    <div id="mapModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex-col">
+    <div id="mapModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex-col" onclick="if(event.target === this) closeMapModal()">
         <div class="glass-panel p-3.5 flex justify-between items-center border-b border-slate-800 shrink-0 shadow-lg">
             <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
                 <i class="fa-solid fa-map-location-dot text-blue-400"></i> Ubicación GPS en Costa Palmas
@@ -422,18 +431,18 @@
     </div>
 
     <!-- MODAL DE DETALLE DE RESIDENTE -->
-    <div id="detailModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+    <div id="detailModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-end justify-center" onclick="if(event.target === this) closeModal()">
         <div id="modalContentBox" class="glass-panel text-white w-full max-w-lg rounded-t-3xl p-4 sm:p-5 flex flex-col gap-3 max-h-[85vh] overflow-y-auto no-scrollbar border-t border-slate-700 shadow-2xl">
             <div class="w-10 h-1 bg-slate-600 rounded-full mx-auto"></div>
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-3">
-                    <img id="modalImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Foto" class="w-14 h-14 rounded-2xl object-cover border-2 border-blue-500/60 shadow-md">
+                    <img id="modalImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Foto" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500/60 shadow-md cursor-pointer hover:opacity-90 transition" onclick="openLightbox(this.src)" title="Ver foto a pantalla completa">
                     <div>
                         <h2 id="modalName" class="font-bold text-base leading-tight text-white"></h2>
                         <p id="modalVilla" class="text-[11px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full inline-block mt-1 font-mono"></p>
                     </div>
                 </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <div class="border-t border-slate-800 pt-2.5 flex flex-col gap-2 text-xs">
@@ -492,14 +501,22 @@
         </div>
     </div>
 
+    <!-- MODAL LIGHTBOX PARA FOTO A PANTALLA COMPLETA -->
+    <div id="lightboxModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg hidden flex-col items-center justify-center p-4" onclick="closeLightbox()">
+        <button onclick="closeLightbox()" class="absolute top-5 right-5 text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="lightboxImg" src="" alt="Foto Pantalla Completa" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
+    </div>
+
     <!-- MODAL DE EMERGENCIAS -->
-    <div id="emergencyModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="emergencyModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeEmergencyModal()">
         <div class="glass-panel border border-rose-500/30 rounded-3xl p-5 max-w-sm w-full shadow-2xl flex flex-col gap-3">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h3 class="font-bold text-rose-400 text-sm flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Directorio de Emergencia
                 </h3>
-                <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-white p-2 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p class="text-[11px] text-slate-300">Toca cualquier número para iniciar una llamada automática:</p>
             <div class="space-y-2 text-xs">
@@ -529,13 +546,13 @@
     </div>
 
     <!-- MODAL DE CANALES DE RADIO -->
-    <div id="radiosModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="radiosModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeRadiosModal()">
         <div class="glass-panel border border-indigo-500/30 rounded-3xl p-5 max-w-md w-full shadow-2xl flex flex-col gap-3">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h3 class="font-bold text-blue-400 text-sm flex items-center gap-2">
                     <i class="fa-solid fa-walkie-talkie"></i> Canales de Radio Oficiales
                 </h3>
-                <button onclick="closeRadiosModal()" class="text-slate-400 hover:text-white p-1 text-base"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeRadiosModal()" class="text-slate-400 hover:text-white p-2 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-1.5 text-xs max-h-[65vh] overflow-y-auto no-scrollbar pr-0.5">
                 <div class="flex justify-between items-center p-3 rounded-2xl bg-slate-900/90 border border-slate-800"><span class="font-bold text-blue-400">Canal 1</span><span class="text-slate-200 font-medium">Seguridad</span></div>
@@ -555,8 +572,8 @@
     </div>
 
     <!-- BOTTOM SHEET -->
-    <div id="bottomSheet" class="bottom-sheet fixed inset-x-0 bottom-0 z-40 glass-panel border-t border-slate-700 rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col">
-        <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeBottomSheet()">
+    <div id="bottomSheet" class="bottom-sheet fixed inset-x-0 bottom-0 z-40 glass-panel border-t border-slate-700 rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col" onclick="if(event.target === this) closeBottomSheet()">
+        <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer sheet-drag-handle" onclick="closeBottomSheet()">
             <div class="w-12 h-1 bg-slate-500 rounded-full"></div>
         </div>
         <div class="px-5 py-2 border-b border-slate-800 flex items-start justify-between">
@@ -565,7 +582,7 @@
                 <h2 id="sheetTitle" class="text-base font-bold text-white">Título del Sector</h2>
                 <p id="sheetSubtitle" class="text-[11px] text-slate-400">Subtítulo Descriptivo</p>
             </div>
-            <button onclick="closeBottomSheet()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition"><i class="fa-solid fa-xmark text-base"></i></button>
+            <button onclick="closeBottomSheet()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition text-base"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="grid grid-cols-3 border-b border-slate-800 bg-slate-900/40 p-1.5 text-xs gap-1">
             <button onclick="switchSectorTab('general')" id="tabBtn-general" class="tab-btn py-2 px-2 font-bold text-blue-400 bg-slate-800 rounded-xl text-center shadow transition">General</button>
@@ -602,6 +619,7 @@
         let leafletMap = null;
         let mapMarkersMap = {};
         let activeZoneFilter = 'all';
+        let isCompactView = false; // Alternador de vista (Tarjetas vs Lista)
 
         function normalizeString(str) {
             if (!str) return '';
@@ -927,6 +945,24 @@
             applyFilters();
         }
 
+        function toggleViewMode() {
+            isCompactView = !isCompactView;
+            const icon = document.getElementById('viewModeIcon');
+            const text = document.getElementById('viewModeText');
+            const container = document.getElementById('residentList');
+
+            if (isCompactView) {
+                icon.className = "fa-solid fa-border-all";
+                if(text) text.innerText = "Tarjetas";
+                container.className = "flex flex-col gap-2 p-4";
+            } else {
+                icon.className = "fa-solid fa-list";
+                if(text) text.innerText = "Lista";
+                container.className = "grid grid-cols-2 gap-3 p-4";
+            }
+            applyFilters();
+        }
+
         function renderDirectory(list) {
             const container = document.getElementById('residentList');
             if(!container) return;
@@ -950,23 +986,46 @@
 
             list.forEach((member, index) => {
                 const card = document.createElement('div');
-                card.className = "glass-panel p-3.5 rounded-2xl border border-slate-800/80 shadow-md flex flex-col items-center text-center cursor-pointer interactive-card text-slate-100 gap-2 card-animate";
-                
                 const delay = Math.min(index * 0.03, 0.5);
-                card.style.animationDelay = `${delay}s`;
 
-                card.onclick = () => openModal(member);
+                if (isCompactView) {
+                    card.className = "glass-panel p-2.5 rounded-2xl border border-slate-800/80 shadow-md flex items-center justify-between cursor-pointer interactive-card text-slate-100 card-animate";
+                    card.style.animationDelay = `${delay}s`;
+                    card.onclick = () => openModal(member);
 
-                card.innerHTML = `
-                    <img src="${member.photo}" alt="${member.name}" class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-700 shadow-md mt-1">
-                    <div class="flex-1 flex flex-col items-center w-full">
-                        <h3 class="font-bold text-xs line-clamp-1 w-full text-white">${member.name}</h3>
-                        <span onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="text-[11px] text-blue-400 font-semibold hover:underline inline-flex items-center gap-1 mt-0.5 font-mono">
-                            <i class="fa-solid fa-map-pin text-[9px]"></i> ${member.villa}
-                        </span>
-                        <span class="text-[9px] text-slate-400 bg-slate-900/80 border border-slate-800 px-2.5 py-0.5 rounded-lg mt-1.5 truncate max-w-full">${member.zone}</span>
-                    </div>
-                `;
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <img src="${member.photo}" alt="${member.name}" class="w-11 h-11 rounded-xl object-cover border border-slate-700 shadow-sm">
+                            <div>
+                                <h3 class="font-bold text-xs text-white">${member.name}</h3>
+                                <p class="text-[10px] text-blue-400 font-mono">Villa: ${member.villa} | ${member.zone}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); openLightbox('${member.photo}')" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-blue-400 flex items-center justify-center text-xs" title="Ver foto">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 flex items-center justify-center text-xs" title="Mapa GPS">
+                                <i class="fa-solid fa-map-pin"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    card.className = "glass-panel p-3.5 rounded-2xl border border-slate-800/80 shadow-md flex flex-col items-center text-center cursor-pointer interactive-card text-slate-100 gap-2 card-animate";
+                    card.style.animationDelay = `${delay}s`;
+                    card.onclick = () => openModal(member);
+
+                    card.innerHTML = `
+                        <img src="${member.photo}" alt="${member.name}" class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-700 shadow-md mt-1">
+                        <div class="flex-1 flex flex-col items-center w-full">
+                            <h3 class="font-bold text-xs line-clamp-1 w-full text-white">${member.name}</h3>
+                            <span onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="text-[11px] text-blue-400 font-semibold hover:underline inline-flex items-center gap-1 mt-0.5 font-mono">
+                                <i class="fa-solid fa-map-pin text-[9px]"></i> ${member.villa}
+                            </span>
+                            <span class="text-[9px] text-slate-400 bg-slate-900/80 border border-slate-800 px-2.5 py-0.5 rounded-lg mt-1.5 truncate max-w-full">${member.zone}</span>
+                        </div>
+                    `;
+                }
                 container.appendChild(card);
             });
         }
@@ -1007,6 +1066,7 @@
                 
                 let matchesZone = true;
                 if (activeZoneFilter !== 'all') {
+                    // Validación exacta para separar Yacht Club de Beach & Yacht Club
                     const memberZoneClean = (m.zone || '').trim().toLowerCase();
                     const filterClean = activeZoneFilter.trim().toLowerCase();
                     matchesZone = (memberZoneClean === filterClean);
@@ -1535,18 +1595,19 @@
             currentActiveSec = null;
         }
 
-        // --- GESTO TÁCTIL PARA CERRAR EL BOTTOM SHEET ---
+        // --- GESTO TÁCTIL AISLADO A LA BARRA SUPERIOR PARA EVITAR TRABAS ---
         let touchStartY = 0;
         let currentTranslateY = 0;
         const bottomSheetElement = document.getElementById('bottomSheet');
+        const dragHandle = bottomSheetElement ? bottomSheetElement.querySelector('.sheet-drag-handle') : null;
 
-        if (bottomSheetElement) {
-            bottomSheetElement.addEventListener('touchstart', (e) => {
+        if (bottomSheetElement && dragHandle) {
+            dragHandle.addEventListener('touchstart', (e) => {
                 touchStartY = e.touches[0].clientY;
                 bottomSheetElement.style.transition = 'none';
             }, { passive: true });
 
-            bottomSheetElement.addEventListener('touchmove', (e) => {
+            dragHandle.addEventListener('touchmove', (e) => {
                 const currentY = e.touches[0].clientY;
                 const diffY = currentY - touchStartY;
                 if (diffY > 0) {
@@ -1555,9 +1616,9 @@
                 }
             }, { passive: true });
 
-            bottomSheetElement.addEventListener('touchend', () => {
+            dragHandle.addEventListener('touchend', () => {
                 bottomSheetElement.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-                if (currentTranslateY > 120) {
+                if (currentTranslateY > 100) {
                     closeBottomSheet();
                 } else {
                     bottomSheetElement.style.transform = 'translateY(0)';
@@ -1570,6 +1631,20 @@
         function closeEmergencyModal() { document.getElementById('emergencyModal').classList.add('hidden'); }
         function openRadiosModal() { document.getElementById('radiosModal').classList.remove('hidden'); }
         function closeRadiosModal() { document.getElementById('radiosModal').classList.add('hidden'); }
+
+        function openLightbox(imgSrc) {
+            const lb = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            img.src = imgSrc;
+            lb.classList.remove('hidden');
+            lb.classList.add('flex');
+        }
+
+        function closeLightbox() {
+            const lb = document.getElementById('lightboxModal');
+            lb.classList.remove('flex');
+            lb.classList.add('hidden');
+        }
 
         function copySectorInfo() {
             if (!currentActiveSec) return;
