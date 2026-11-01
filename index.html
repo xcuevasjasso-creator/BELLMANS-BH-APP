@@ -8,7 +8,117 @@
   <title>JSFiddle w7tscnmz</title>
 
   <style>
-    
+    html, body {
+    background-color: #020617 !important;
+    color: #f8fafc !important;
+    height: 100%;
+    height: 100dvh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#leaflet-map {
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 10;
+    touch-action: pan-x pan-y;
+}
+
+.map-container {
+    position: relative;
+    display: inline-block;
+    margin: 0 auto;
+    touch-action: pan-x pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.sector-polygon {
+    fill-opacity: 0.35;
+    stroke-width: 3;
+    cursor: pointer;
+    transition: fill-opacity 0.2s ease, stroke-width 0.2s ease;
+}
+.sector-polygon:hover, .sector-polygon.active {
+    fill-opacity: 0.65;
+    stroke-width: 5;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
+}
+
+.sec-1 { fill: #22c55e; stroke: #15803d; }
+.sec-2 { fill: #3b82f6; stroke: #1d4ed8; }
+.sec-3 { fill: #eab308; stroke: #ca8a04; }
+.sec-4 { fill: #f97316; stroke: #c2410c; }
+.sec-aman { fill: #a855f7; stroke: #6b21a8; }
+
+.access-hitbox { cursor: pointer; }
+.access-hitbox:hover circle.pin-marker {
+    fill: #ef4444 !important;
+    r: 18 !important;
+}
+
+.bottom-sheet {
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bottom-sheet.open {
+    transform: translateY(0);
+}
+
+.glass-panel {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(59, 130, 246, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+@keyframes fadeInUpPro {
+    0% { opacity: 0; transform: translateY(14px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-animate {
+    animation: fadeInUpPro 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.interactive-card {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.interactive-card:active {
+    transform: scale(0.96) !important;
+}
+.interactive-card:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 6px 20px -3px rgba(59, 130, 246, 0.25);
+    transform: translateY(-2px);
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+.skeleton-loader {
+    background: linear-gradient(90deg, rgba(30, 41, 59, 0.4) 25%, rgba(51, 65, 85, 0.6) 50%, rgba(30, 41, 59, 0.4) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes softPulse {
+    0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+}
+button.bg-rose-600 { animation: softPulse 2.5s infinite; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 
   
@@ -20,139 +130,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Costa Palmas — Dashboard Operativo Pro</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        html, body {
-            background-color: #020617 !important;
-            color: #f8fafc !important;
-            height: 100%;
-            height: 100dvh;
-            width: 100vw;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            -webkit-text-size-adjust: 100%;
-            -webkit-font-smoothing: antialiased;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        #leaflet-map {
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 10;
-            touch-action: pan-x pan-y;
-        }
-
-        .map-container {
-            position: relative;
-            display: inline-block;
-            margin: 0 auto;
-            touch-action: pan-x pan-y pinch-zoom;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .sector-polygon {
-            fill-opacity: 0.35;
-            stroke-width: 3;
-            cursor: pointer;
-            transition: fill-opacity 0.2s ease, stroke-width 0.2s ease;
-        }
-        .sector-polygon:hover, .sector-polygon.active {
-            fill-opacity: 0.65;
-            stroke-width: 5;
-            filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
-        }
-
-        .sec-1 { fill: #22c55e; stroke: #15803d; }
-        .sec-2 { fill: #3b82f6; stroke: #1d4ed8; }
-        .sec-3 { fill: #eab308; stroke: #ca8a04; }
-        .sec-4 { fill: #f97316; stroke: #c2410c; }
-        .sec-aman { fill: #a855f7; stroke: #6b21a8; }
-
-        .access-hitbox { cursor: pointer; }
-        .access-hitbox:hover circle.pin-marker {
-            fill: #ef4444 !important;
-            r: 18 !important;
-        }
-
-        /* Bottom Sheet con área de arrastre aislada a la barra superior */
-        .bottom-sheet {
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .bottom-sheet.open {
-            transform: translateY(0);
-        }
-
-        .sheet-drag-handle {
-            touch-action: none;
-        }
-
-        /* Estética Clásica Azul Oscuro y Vidrio Esmerilado */
-        .glass-panel {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(59, 130, 246, 0.18);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        @keyframes fadeInUpPro {
-            0% { opacity: 0; transform: translateY(14px) scale(0.98); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        
-        .card-animate {
-            animation: fadeInUpPro 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
-        }
-
-        .interactive-card {
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .interactive-card:active {
-            transform: scale(0.96) !important;
-        }
-        .interactive-card:hover {
-            border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 6px 20px -3px rgba(59, 130, 246, 0.25);
-            transform: translateY(-2px);
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .skeleton-loader {
-            background: linear-gradient(90deg, rgba(30, 41, 59, 0.4) 25%, rgba(51, 65, 85, 0.6) 50%, rgba(30, 41, 59, 0.4) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes softPulse {
-            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
-        }
-        button.bg-rose-600 { animation: softPulse 2.5s infinite; }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
 </head>
 <body class="bg-slate-950 flex flex-col h-[100dvh] w-screen overflow-hidden m-0 p-0 text-slate-100">
 
@@ -248,21 +225,21 @@
             
             <!-- VISTA 1: DIRECTORIO DE RESIDENTES -->
             <div id="view-directory" class="flex flex-col w-full pb-24">
-                <!-- Barra de Búsqueda Flotante Inteligente -->
+                <!-- Barra de Búsqueda Flotante Inteligente con X Ampliada -->
                 <div class="sticky top-0 z-20 bg-slate-950/85 backdrop-blur-xl px-4 pt-3 pb-3 space-y-2.5 border-b border-slate-900/80 shadow-lg transition-all">
-                    <div class="relative flex items-center">
+                    <div class="relative flex items-center w-full">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
                         <input type="text" id="searchInput" placeholder="Buscar por nombre, villa, zona o Folio Opera..." 
-                            class="w-full pl-10 pr-9 py-2.5 glass-panel border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner text-white placeholder-slate-500 transition-all"
+                            class="w-full pl-10 pr-12 py-2.5 glass-panel border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner text-white placeholder-slate-500 transition-all block"
                             oninput="filterDirectory()">
-                        <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-3 text-slate-500 hover:text-slate-300 hidden p-1 transition-colors" title="Borrar búsqueda">
-                            <i class="fa-solid fa-xmark text-sm"></i>
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white hidden p-2 transition-colors z-10 flex items-center justify-center" title="Borrar búsqueda">
+                            <i class="fa-solid fa-xmark text-base"></i>
                         </button>
                     </div>
 
-                    <!-- Controles: Filtros Dinámicos + Alternador de Vista (Tarjetas vs Lista Compacta) -->
+                    <!-- Controles: Filtros Dinámicos + Alternador de Vista -->
                     <div class="flex items-center justify-between gap-2">
                         <div id="zoneFiltersContainer" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs flex-1">
                             <button class="px-3.5 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-md shadow-blue-600/20">Todas</button>
@@ -573,7 +550,7 @@
 
     <!-- BOTTOM SHEET -->
     <div id="bottomSheet" class="bottom-sheet fixed inset-x-0 bottom-0 z-40 glass-panel border-t border-slate-700 rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col" onclick="if(event.target === this) closeBottomSheet()">
-        <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer sheet-drag-handle" onclick="closeBottomSheet()">
+        <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeBottomSheet()">
             <div class="w-12 h-1 bg-slate-500 rounded-full"></div>
         </div>
         <div class="px-5 py-2 border-b border-slate-800 flex items-start justify-between">
@@ -604,1097 +581,463 @@
         <span id="toastMsg">Acción realizada</span>
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- Scripts de Librerías Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> tailwind.config = { darkMode: 'class' }; </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- MOTOR Y LÓGICA GENERAL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
-        const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
-        const SHEET_ORIGIN_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1281819744";
-        const SHEET_CONFIG_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1458002197";
-
-        let membersList = [];
-        let originDictionary = {};
-        let leafletMap = null;
-        let mapMarkersMap = {};
-        let activeZoneFilter = 'all';
-        let isCompactView = false; // Alternador de vista (Tarjetas vs Lista)
-
-        function normalizeString(str) {
-            if (!str) return '';
-            return str.toString().toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/[-\s]/g, "");
-        }
-
-        const OPERA_MAPPING = {
-            "R1-11": "4011", "R1-12": "4012", "R1-21": "4021", "R1-22": "4022", "R1-31": "4031", "R1-32": "4032",
-            "R2-11": "4211", "R2-12": "4212", "R2-13": "4213", "R2-14": "4214", "R2-15": "4215", "R2-16": "4216",
-            "R2-21": "4221", "R2-22": "4222", "R2-23": "4223", "R2-24": "4224", "R2-25": "4225", "R2-26": "4226",
-            "R2-31": "4231", "R2-32": "4232", "R2-33": "4233", "R2-34": "4234",
-            "R5-11": "4411", "R5-12": "4412", "R5-21": "4421", "R5-22": "4422", "R5-31": "4431", "R5-32": "4432",
-            "R6-11": "4611", "R6-12": "4612", "R6-21": "4621", "R6-22": "4622", "R6-31": "4631", "R6-32": "4632",
-            "R7-11": "4811", "R7-12": "4812", "R7-21": "4821", "R7-22": "4822", "R7-31": "4831", "R7-32": "4832",
-            "BFC-01": "5010", "BFC-02": "5020", "BFC-03": "5030", "BFC-04": "5040", "BFC-05": "5050", "BFC-06": "5060",
-            "BFV-00": "5120", "BFV-0": "5130", "BFV-01": "5140", "BFV-02": "5150", "BFV-05": "5180", "BFV-06": "5190",
-            "BFV-07": "5200", "BFV-09": "5220", "BFV-11": "5240", "BFV-12": "5250", "EV-14": "5270", "EV-15": "5280", "EV-17": "5300",
-            "BCC-02": "5400", "BCC-03": "5410", "BCC-04": "5420", "BCC-05": "5430", "BCC-06": "5440", "BCC-07": "5450", "BCC-08": "5460",
-            "OVV18": "5500", "OVV19": "5510", "OVV20": "5520", "OVV21": "5530", "OVV22": "5540", "OVV23": "5550", "OVV24": "5560",
-            "SV-09": "5709", "SV-11": "5711", "SV-12": "5712", "SV-13": "5713", "SV-14": "5714", "SV-15": "5715", "SV-16": "5716", "SV-17": "5717", "SV-18": "5718",
-            "R3-101": "6101", "R3-102": "6102", "R3-103": "6103", "R3-104": "6104", "R3-105": "6105", "R3-106": "6106", "R3-107": "6107", "R3-108": "6108", "R3-109": "6109", "R3-110": "6110", "R3-111": "6111", "R3-112": "6112",
-            "R3-201": "6201", "R3-202": "6202", "R3-203": "6203", "R3-204": "6204", "R3-205": "6205", "R3-206": "6206", "R3-207": "6207", "R3-208": "6208", "R3-209": "6209", "R3-210": "6210", "R3-211": "6211", "R3-212": "6212",
-            "R3-301": "6301", "R3-302": "6302", "R3-303": "6303", "R3-304": "6304", "R3-305": "6305", "R3-306": "6306", "R3-307": "6307", "R3-308": "6308", "R3-309": "6309", "R3-310": "6310", "R3-311": "6311", "R3-312": "6312",
-            "MV-16": "7316", "MV-17": "7317", "MV-28": "7328"
-        };
-
-        function getOperaId(villa) {
-            if (!villa) return "N/D";
-            const clean = villa.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
-            for (const [key, val] of Object.entries(OPERA_MAPPING)) {
-                if (clean.includes(key) || key.includes(clean)) return val;
-            }
-            return "N/D";
-        }
-
-        async function handleAuth() {
-            const userInput = document.getElementById('auth-user').value.trim().toLowerCase();
-            const passInput = document.getElementById('auth-pass').value.trim();
-            const authBtn = document.getElementById('auth-btn');
-
-            if (!userInput || !passInput) {
-                alert('Por favor, ingresa tu usuario y contraseña.');
-                return;
-            }
-
-            authBtn.innerText = "Verificando acceso...";
-            authBtn.disabled = true;
-
-            const localUsers = {
-                "xasharitl": "123456", "francisco": "123456", "esteban": "123456", "fernando": "123456",
-                "ignacio": "123456", "mozza": "123456", "delphine": "123456", "danielc": "123456",
-                "juanc": "123456", "josel": "123456", "ulises": "123456", "diego": "123456", "dorman": "123456"
-            };
-
-            if (localUsers[userInput] && localUsers[userInput] === passInput) {
-                localStorage.setItem('cp_logged_user', userInput);
-                checkSession();
-                return;
-            }
-
-            try {
-                const resOrigin = await fetch(SHEET_ORIGIN_URL);
-                if (!resOrigin.ok) throw new Error("Error de red");
-                const textOrigin = await resOrigin.text();
-                const lines = textOrigin.split("\n");
-                let authenticated = false;
-
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-                    const cols = parseCSVLine(lines[i]);
-                    if ((cols[0] || "").trim().toLowerCase() === userInput && (cols[1] || "").trim() === passInput) {
-                        authenticated = true;
-                        break;
-                    }
-                }
-
-                if (authenticated) {
-                    localStorage.setItem('cp_logged_user', userInput);
-                    checkSession();
-                } else {
-                    alert('Usuario o contraseña incorrectos.');
-                    authBtn.innerText = "Iniciar Sesión";
-                    authBtn.disabled = false;
-                }
-            } catch (error) {
-                alert('⚠️ Error de conexión con la nube.');
-                authBtn.innerText = "Iniciar Sesión";
-                authBtn.disabled = false;
-            }
-        }
-
-        function checkSession() {
-            const loggedUser = localStorage.getItem('cp_logged_user');
-            const authScreen = document.getElementById('auth-screen');
-            const badgeBtn = document.getElementById('userBadgeBtn');
-
-            if (!loggedUser) {
-                authScreen.style.display = 'flex';
-            } else {
-                authScreen.style.display = 'none';
-                if (badgeBtn) badgeBtn.innerText = loggedUser.substring(0, 2).toUpperCase();
-                loadSheetData();
-                loadCompanyLogo();
-            }
-        }
-
-        async function loadCompanyLogo() {
-            try {
-                const res = await fetch(SHEET_CONFIG_URL);
-                if (!res.ok) return;
-                const text = await res.text();
-                const lines = text.split("\n");
-                if (lines.length > 1) {
-                    const cols = parseCSVLine(lines[1]);
-                    const logoUrl = (cols[0] || "").trim();
-                    if (logoUrl.startsWith('http')) {
-                        const container = document.getElementById('companyLogoContainer');
-                        if (container) {
-                            container.innerHTML = `<img src="${logoUrl}" alt="Logo CP" class="w-full h-full object-cover">`;
-                        }
-                    }
-                }
-            } catch(e) {}
-        }
-
-        function toggleAdminPanel() {
-            const modal = document.getElementById('admin-modal');
-            const isHidden = modal.classList.contains('hidden');
-            if (isHidden) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                const currentUser = localStorage.getItem('cp_logged_user') || 'operador';
-                document.getElementById('profile-user').value = currentUser;
-                const savedProfile = JSON.parse(localStorage.getItem('cp_profile_' + currentUser) || '{}');
-                document.getElementById('profile-name').value = savedProfile.name || (currentUser.toUpperCase() + ' — Bellman & Security');
-            } else {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-            }
-        }
-
-        function saveProfileData() {
-            const currentUser = localStorage.getItem('cp_logged_user');
-            const name = document.getElementById('profile-name').value.trim();
-            localStorage.setItem('cp_profile_' + currentUser, JSON.stringify({ name }));
-            showToast('¡Datos guardados exitosamente!');
-            toggleAdminPanel();
-        }
-
-        function clearActiveSession() {
-            if (confirm('¿Deseas cerrar la sesión activa?')) {
-                localStorage.removeItem('cp_logged_user');
-                location.reload();
-            }
-        }
-
-        function cleanKey(str) {
-            if (!str) return "";
-            return str.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        }
-
-        async function loadSheetData() {
-            const syncEl = document.getElementById('syncStatus');
-            const syncDot = document.getElementById('syncIndicatorDot');
-
-            try {
-                let coordsDictionary = {};
-                try {
-                    const resCoords = await fetch(SHEET_COORD_URL);
-                    if (resCoords.ok) coordsDictionary = parseCoordsCSV(await resCoords.text());
-                } catch(e) {}
-
-                try {
-                    const resOrigin = await fetch(SHEET_ORIGIN_URL);
-                    if (resOrigin.ok) originDictionary = parseOriginCSV(await resOrigin.text());
-                } catch(e) {}
-
-                const resMembers = await fetch(SHEET_MEMBERS_URL);
-                if (!resMembers.ok) throw new Error("Error miembros");
-                parseCSV(await resMembers.text(), coordsDictionary);
-
-                const now = new Date();
-                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                if (syncEl) syncEl.innerText = `Sincronizado (${timeString})`;
-                if (syncDot) syncDot.className = "w-2 h-2 rounded-full bg-green-400";
-            } catch (error) {
-                const listEl = document.getElementById('residentList');
-                if (listEl) listEl.innerHTML = `<div class="col-span-2 text-center py-10 text-red-400 text-sm">⚠️ Error al conectar con las hojas de cálculo.</div>`;
-                if (syncEl) syncEl.innerText = `Error de conexión`;
-                if (syncDot) syncDot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
-            }
-        }
-
-        function parseOriginCSV(text) {
-            const lines = text.split("\n");
-            const originMap = {};
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cols = parseCSVLine(lines[i]);
-                const key = cleanKey(cols[0] || "");
-                if (key) originMap[key] = cols[1] || "";
-            }
-            return originMap;
-        }
-
-        function parseCoordsCSV(text) {
-            const lines = text.split("\n");
-            const coordsMap = {};
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cols = parseCSVLine(lines[i]);
-                const latVal = parseFloat(cols[1]);
-                const lngVal = parseFloat(cols[2]);
-                const key = cleanKey(cols[cols.length - 1] || cols[4] || "");
-                if (key && !isNaN(latVal) && !isNaN(lngVal)) coordsMap[key] = { lat: latVal, lng: lngVal };
-            }
-            return coordsMap;
-        }
-
-        function findLocation(rawVilla, coordsMap) {
-            if (!rawVilla) return null;
-            const key = cleanKey(rawVilla);
-            if (key.includes('MC10') || key.includes('M10L') || key.includes('M15L')) return null;
-            if (key.startsWith('R1') || key.startsWith('R2') || key.startsWith('R3')) {
-                return { lat: 23.6089788290, lng: -109.588890271 };
-            }
-            if (coordsMap[key]) return coordsMap[key];
-            const buildingMatch = key.match(/^([A-Z]+\d+)/);
-            if (buildingMatch && coordsMap[buildingMatch[1]]) return coordsMap[buildingMatch[1]];
-            return null;
-        }
-
-        function parseCSV(text, coordsMap) {
-            const lines = text.split("\n");
-            membersList = [];
-            const defaultLat = 23.609724386;
-            const defaultLng = -109.5943928;
-
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cols = parseCSVLine(lines[i]);
-                if (cols.length >= 2 && cols[1]) {
-                    const rawVilla = cols[3] || "";
-                    let latVal = parseFloat(cols[5]);
-                    let lngVal = parseFloat(cols[6]);
-
-                    if (isNaN(latVal) || isNaN(lngVal)) {
-                        const mapLoc = findLocation(rawVilla, coordsMap);
-                        latVal = mapLoc ? mapLoc.lat : defaultLat;
-                        lngVal = mapLoc ? mapLoc.lng : defaultLng;
-                    }
-
-                    const memberName = cols[1];
-                    membersList.push({
-                        id: cols[0] || i,
-                        name: memberName,
-                        zone: cols[2] || "Beach & Yacht Club",
-                        villa: rawVilla || "N/D",
-                        photo: cols[4] && cols[4].startsWith('http') ? cols[4] : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-                        lat: latVal,
-                        lng: lngVal,
-                        transport: cols[7] || "Sin preferencias especiales de transporte.", 
-                        bellman: cols[8] || "Sin notas específicas para bellman.",          
-                        phone: cols[9] || "N/A",
-                        origin: originDictionary[cleanKey(memberName)] || "N/D",
-                        opera: getOperaId(rawVilla)
-                    });
-                }
-            }
-            buildDynamicFilters(membersList);
-            applyFilters();
-        }
-
-        function parseCSVLine(line) {
-            const cols = [];
-            let inQuotes = false;
-            let current = '';
-            for (let char of line) {
-                if (char === '"') inQuotes = !inQuotes;
-                else if (char === ',' && !inQuotes) {
-                    cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
-                    current = '';
-                } else current += char;
-            }
-            cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
-            return cols;
-        }
-
-        function buildDynamicFilters(dataList) {
-            const container = document.getElementById('zoneFiltersContainer');
-            if (!container) return;
-
-            const uniqueZones = [...new Set(dataList.map(m => m.zone ? m.zone.trim() : 'Sin Zona'))];
-            container.innerHTML = '';
-
-            const allBtn = document.createElement('button');
-            allBtn.className = getButtonClass('all', activeZoneFilter);
-            allBtn.innerText = 'Todas';
-            allBtn.onclick = () => filterByDynamicZone('all');
-            container.appendChild(allBtn);
-
-            uniqueZones.forEach(zone => {
-                const btn = document.createElement('button');
-                btn.className = getButtonClass(zone, activeZoneFilter);
-                btn.innerText = zone;
-                btn.onclick = () => filterByDynamicZone(zone);
-                container.appendChild(btn);
-            });
-        }
-
-        function getButtonClass(zone, currentFilter) {
-            const isActive = zone === currentFilter;
-            return isActive 
-                ? "px-3.5 py-1.5 rounded-full font-semibold bg-blue-600 text-white shrink-0 shadow-md shadow-blue-600/20 transition-all cursor-pointer interactive-card" 
-                : "px-3.5 py-1.5 rounded-full font-medium glass-panel text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-all cursor-pointer interactive-card";
-        }
-
-        function filterByDynamicZone(zone) {
-            activeZoneFilter = zone;
-            buildDynamicFilters(membersList);
-            applyFilters();
-        }
-
-        function toggleViewMode() {
-            isCompactView = !isCompactView;
-            const icon = document.getElementById('viewModeIcon');
-            const text = document.getElementById('viewModeText');
-            const container = document.getElementById('residentList');
-
-            if (isCompactView) {
-                icon.className = "fa-solid fa-border-all";
-                if(text) text.innerText = "Tarjetas";
-                container.className = "flex flex-col gap-2 p-4";
-            } else {
-                icon.className = "fa-solid fa-list";
-                if(text) text.innerText = "Lista";
-                container.className = "grid grid-cols-2 gap-3 p-4";
-            }
-            applyFilters();
-        }
-
-        function renderDirectory(list) {
-            const container = document.getElementById('residentList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(list.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-2 text-center py-12 px-4 space-y-3 glass-panel rounded-3xl border border-slate-800 my-4 shadow-inner">
-                        <div class="w-12 h-12 bg-slate-900 text-slate-400 rounded-2xl flex items-center justify-center mx-auto text-lg border border-slate-800">
-                            <i class="fa-solid fa-user-slash"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-sm">Sin resultados</h4>
-                            <p class="text-xs text-slate-400 mt-0.5">No se encontró coincidencia por nombre, villa, zona o Folio Opera.</p>
-                        </div>
-                        <button onclick="clearSearch()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">Limpiar búsqueda</button>
-                    </div>
-                `;
-                return;
-            }
-
-            list.forEach((member, index) => {
-                const card = document.createElement('div');
-                const delay = Math.min(index * 0.03, 0.5);
-
-                if (isCompactView) {
-                    card.className = "glass-panel p-2.5 rounded-2xl border border-slate-800/80 shadow-md flex items-center justify-between cursor-pointer interactive-card text-slate-100 card-animate";
-                    card.style.animationDelay = `${delay}s`;
-                    card.onclick = () => openModal(member);
-
-                    card.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <img src="${member.photo}" alt="${member.name}" class="w-11 h-11 rounded-xl object-cover border border-slate-700 shadow-sm">
-                            <div>
-                                <h3 class="font-bold text-xs text-white">${member.name}</h3>
-                                <p class="text-[10px] text-blue-400 font-mono">Villa: ${member.villa} | ${member.zone}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="event.stopPropagation(); openLightbox('${member.photo}')" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-blue-400 flex items-center justify-center text-xs" title="Ver foto">
-                                <i class="fa-solid fa-expand"></i>
-                            </button>
-                            <button onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 flex items-center justify-center text-xs" title="Mapa GPS">
-                                <i class="fa-solid fa-map-pin"></i>
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    card.className = "glass-panel p-3.5 rounded-2xl border border-slate-800/80 shadow-md flex flex-col items-center text-center cursor-pointer interactive-card text-slate-100 gap-2 card-animate";
-                    card.style.animationDelay = `${delay}s`;
-                    card.onclick = () => openModal(member);
-
-                    card.innerHTML = `
-                        <img src="${member.photo}" alt="${member.name}" class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-700 shadow-md mt-1">
-                        <div class="flex-1 flex flex-col items-center w-full">
-                            <h3 class="font-bold text-xs line-clamp-1 w-full text-white">${member.name}</h3>
-                            <span onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="text-[11px] text-blue-400 font-semibold hover:underline inline-flex items-center gap-1 mt-0.5 font-mono">
-                                <i class="fa-solid fa-map-pin text-[9px]"></i> ${member.villa}
-                            </span>
-                            <span class="text-[9px] text-slate-400 bg-slate-900/80 border border-slate-800 px-2.5 py-0.5 rounded-lg mt-1.5 truncate max-w-full">${member.zone}</span>
-                        </div>
-                    `;
-                }
-                container.appendChild(card);
-            });
-        }
-
-        function filterDirectory() {
-            const searchInput = document.getElementById('searchInput');
-            const clearBtn = document.getElementById('clearSearchBtn');
-            if (searchInput && clearBtn) {
-                if (searchInput.value.trim().length > 0) clearBtn.classList.remove('hidden');
-                else clearBtn.classList.add('hidden');
-            }
-            applyFilters();
-        }
-
-        function clearSearch() {
-            const input = document.getElementById('searchInput');
-            const clearBtn = document.getElementById('clearSearchBtn');
-            if (input) {
-                input.value = '';
-                if (clearBtn) clearBtn.classList.add('hidden');
-                applyFilters();
-                input.focus();
-            }
-        }
-
-        // --- FUNCIÓN EXACTA DE FILTROS ---
-        function applyFilters() {
-            const searchEl = document.getElementById('searchInput');
-            const query = normalizeString(searchEl ? searchEl.value : '');
-            
-            const filtered = membersList.filter(m => {
-                const name = normalizeString(m.name || '');
-                const villa = normalizeString(m.villa || '');
-                const zone = normalizeString(m.zone || '');
-                const opera = normalizeString(m.opera || '');
-
-                const matchesSearch = !query || name.includes(query) || villa.includes(query) || zone.includes(query) || opera.includes(query);
-                
-                let matchesZone = true;
-                if (activeZoneFilter !== 'all') {
-                    // Validación exacta para separar Yacht Club de Beach & Yacht Club
-                    const memberZoneClean = (m.zone || '').trim().toLowerCase();
-                    const filterClean = activeZoneFilter.trim().toLowerCase();
-                    matchesZone = (memberZoneClean === filterClean);
-                }
-                
-                return matchesSearch && matchesZone;
-            });
-            renderDirectory(filtered);
-        }
-
-        function focusOnMember(memberId) {
-            const member = membersList.find(m => m.id == memberId);
-            if (!member) return;
-            closeModal();
-            openMapModal(member);
-        }
-
-        function openMapModal(member) {
-            const mapModal = document.getElementById('mapModal');
-            mapModal.classList.remove('hidden');
-            mapModal.classList.add('flex');
-
-            setTimeout(() => {
-                if (!leafletMap) {
-                    initLeafletMap(member);
-                } else {
-                    leafletMap.invalidateSize();
-                    leafletMap.setView([member.lat, member.lng], 18);
-                    updateLeafletMarkers([member]);
-                }
-            }, 150);
-        }
-
-        function closeMapModal() {
-            const mapModal = document.getElementById('mapModal');
-            mapModal.classList.remove('flex');
-            mapModal.classList.add('hidden');
-        }
-
-        function switchTab(tab) {
-            const dirView = document.getElementById('view-directory');
-            const transView = document.getElementById('view-transport');
-            const svgView = document.getElementById('view-map-svg');
-            const sectorBar = document.getElementById('sectorBottomBar');
-            
-            const navDir = document.getElementById('nav-dir');
-            const navTrans = document.getElementById('nav-trans');
-            const navSvg = document.getElementById('nav-svg');
-
-            if(dirView) dirView.classList.add('hidden');
-            if(transView) transView.classList.add('hidden');
-            if(svgView) svgView.classList.add('hidden');
-            if(sectorBar) sectorBar.classList.add('hidden');
-
-            const inactiveColor = "flex flex-col items-center text-slate-400 hover:text-slate-200 transition-colors py-1 px-3 rounded-xl";
-            if(navDir) navDir.className = inactiveColor;
-            if(navTrans) navTrans.className = inactiveColor;
-            if(navSvg) navSvg.className = inactiveColor;
-
-            if(tab === 'directory') {
-                if(dirView) dirView.classList.remove('hidden');
-                if(navDir) navDir.className = "flex flex-col items-center text-blue-400 transition-colors py-1 px-3 rounded-xl";
-            } else if(tab === 'transport') {
-                if(transView) transView.classList.remove('hidden');
-                if(navTrans) navTrans.className = "flex flex-col items-center text-blue-400 transition-colors py-1 px-3 rounded-xl";
-            } else if(tab === 'svg') {
-                if(svgView) svgView.classList.remove('hidden');
-                if(sectorBar) sectorBar.classList.remove('hidden');
-                if(navSvg) navSvg.className = "flex flex-col items-center text-blue-400 transition-colors py-1 px-3 rounded-xl";
-            }
-        }
-
-        function initLeafletMap(targetMember) {
-            const mapContainer = document.getElementById('leaflet-map');
-            if(!mapContainer) return;
-
-            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, minZoom: 14 });
-            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, minZoom: 14 });
-
-            const startLat = targetMember ? targetMember.lat : 23.609724386;
-            const startLng = targetMember ? targetMember.lng : -109.5943928;
-
-            leafletMap = L.map('leaflet-map', {
-                center: [startLat, startLng],
-                zoom: targetMember ? 18 : 16,
-                minZoom: 14, maxZoom: 19,
-                layers: [satelliteLayer]
-            });
-
-            L.control.layers({ "Estándar": standardLayer, "Satelital": satelliteLayer }).addTo(leafletMap);
-            updateLeafletMarkers(targetMember ? [targetMember] : membersList);
-            setTimeout(() => { leafletMap.invalidateSize(); }, 200);
-        }
-
-        function updateLeafletMarkers(list) {
-            if (!leafletMap) return;
-            Object.values(mapMarkersMap).forEach(m => leafletMap.removeLayer(m));
-            mapMarkersMap = {};
-
-            list.forEach(member => {
-                const marker = L.marker([member.lat, member.lng]).addTo(leafletMap);
-                marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>Folio Opera: ${member.opera}<br>Origen: ${member.origin}<br>${member.zone}`);
-                marker.on('click', () => openModal(member));
-                mapMarkersMap[member.id] = marker;
-            });
-        }
-
-        // --- MÓDULO DE TRANSPORTACIÓN ---
-        document.getElementById('pdfInput').addEventListener('change', (e) => {
-            const btn = document.getElementById('processBtn');
-            if (e.target.files.length > 0) {
-                btn.disabled = false;
-                btn.className = "w-full sm:w-auto px-5 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-lg shadow-blue-600/20 uppercase tracking-wider whitespace-nowrap hover:bg-blue-500 interactive-card";
-            }
-        });
-
-        function resetAppPDF() {
-            document.getElementById('pdfInput').value = "";
-            const btn = document.getElementById('processBtn');
-            btn.disabled = true;
-            btn.className = "w-full sm:w-auto px-5 py-2.5 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl transition-all cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider whitespace-nowrap";
-            document.getElementById('mainOutput').innerHTML = '<p class="text-slate-500 text-xs italic text-center py-12">Cargue el archivo PDF para desplegar la agenda ejecutiva de transportación.</p>';
-            document.getElementById('statTotal').innerText = "0";
-            document.getElementById('statArrivals').innerText = "0";
-            document.getElementById('statDepartures').innerText = "0";
-        }
-
-        async function processPDF() {
-            const fileInput = document.getElementById('pdfInput');
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            const statusContainer = document.getElementById('statusContainer');
-            const progressBar = document.getElementById('progressBar');
-            const statusText = document.getElementById('statusText');
-            const statusPercent = document.getElementById('statusPercent');
-
-            statusContainer.classList.remove('hidden');
-
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                const totalPages = pdfDoc.numPages;
-                let fullText = "";
-
-                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-                    const page = await pdfDoc.getPage(pageNum);
-                    const textContent = await page.getTextContent();
-                    const pageStrings = textContent.items.map(item => item.str);
-                    fullText += "\n" + pageStrings.join(" ");
-
-                    const percent = Math.round((pageNum / totalPages) * 100);
-                    progressBar.style.width = percent + "%";
-                    statusPercent.innerText = percent + "%";
-                    statusText.innerText = `Procesando página ${pageNum} de ${totalPages}...`;
-                }
-
-                statusText.innerText = "Organizando cronograma...";
-                parseReservationsReport(fullText);
-                statusText.innerText = "¡Procesamiento completo!";
-                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
-            } catch (error) {
-                console.error("Error al procesar PDF:", error);
-                alert("Ocurrió un error al leer el documento.");
-                statusContainer.classList.add('hidden');
-            }
-        }
-
-        function parseReservationsReport(text) {
-            const items = [];
-            const blocks = text.split(/(?=(?:SJD Airport|FBO Private Airport)\s*[-–]\s*(?:Departure|Arrival)|(?:SJD Airport|FBO Private Airport)\s*Arrival)/gi);
-
-            blocks.forEach(block => {
-                if (!block.trim()) return;
-
-                const headerSnippet = block.substring(0, 40);
-                const isArrival = /Arrival/i.test(headerSnippet);
-                const isDeparture = /Departure/i.test(headerSnippet);
-
-                if (!isArrival && !isDeparture) return;
-                if (/Canceled|Cancelled/i.test(block)) return;
-
-                let name = "";
-                const nameMatch = block.match(/Name:\s*([A-Za-z\s&]+?)(?=\s+Number of Guest|$)/i) ||
-                                  block.match(/Player\s*1:\s*[A-Z0-9\-]+\s*[-–]\s*(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Za-z\s&]+)/i);
-                
-                if (nameMatch && nameMatch[1]) {
-                    name = nameMatch[1].trim().replace(/\s+/g, ' ');
-                }
-                if (!name || name.length < 3) return;
-
-                let pax = "1";
-                const paxMatch = block.match(/Number of Guest:\s*(\d{1,2})/i);
-                if (paxMatch) pax = paxMatch[1].trim();
-
-                let time = "TBC";
-                let minutesValue = 9999;
-
-                if (isArrival) {
-                    const dropTimeMatch = block.match(/Drop-off time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
-                    const pickTimeArrival = block.match(/Pick-up time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
-                    const timeToUse = dropTimeMatch ? dropTimeMatch[1] : (pickTimeArrival ? pickTimeArrival[1] : null);
-                    if (timeToUse) {
-                        time = timeToUse.trim();
-                        minutesValue = convertTimeToMinutes(time);
-                    }
-                } else {
-                    const pickTimeMatch = block.match(/Pick-up time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
-                    if (pickTimeMatch && pickTimeMatch[1]) {
-                        time = pickTimeMatch[1].trim();
-                        minutesValue = convertTimeToMinutes(time);
-                    }
-                }
-
-                let pickUpPoint = "";
-                let dropOffPoint = "";
-
-                const pickMatch = block.match(/Pick-up point:\s*([^\n]+?)(?=\s+(?:Drop-off point:|Drop-off time|Transportation|Reservation|Flight|$))/i);
-                if (pickMatch && pickMatch[1]) pickUpPoint = pickMatch[1].trim().replace(/\s+/g, ' ');
-
-                const dropMatch = block.match(/Drop-off point:\s*([^\n]+?)(?=\s+(?:Drop-off time|Pick-up time|Transportation|Reservation|Flight|$))/i);
-                if (dropMatch && dropMatch[1]) dropOffPoint = dropMatch[1].trim().replace(/\s+/g, ' ');
-
-                if (/Four Seasons|FS Lobby/i.test(pickUpPoint)) pickUpPoint = "Four Seasons Lobby";
-                if (/Four Seasons|FS Lobby/i.test(dropOffPoint)) dropOffPoint = "Four Seasons Lobby";
-
-                if (!pickUpPoint) pickUpPoint = isArrival ? "SJD International Airport" : "Four Seasons Lobby";
-                if (!dropOffPoint) dropOffPoint = isArrival ? "Four Seasons Lobby" : "SJD International Airport";
-
-                if (/FBO Private Airport/i.test(headerSnippet)) {
-                    if (isArrival) pickUpPoint = "FBO Private Airport CSL";
-                    else dropOffPoint = "FBO Private Airport CSL";
-                }
-
-                let vehicleShort = "Suburban";
-                if (/SPRINTER/i.test(block) || /Sprinter/i.test(block)) vehicleShort = "Sprinter";
-                else if (/SUV/i.test(block) || /Suburban/i.test(block)) vehicleShort = "Suburban";
-
-                let transportation = `Transcabo Beach House, One ${vehicleShort}`;
-                if (/Own/i.test(block)) {
-                    transportation = "Own Transportation";
-                    vehicleShort = "Own Trans.";
-                }
-
-                const item = {
-                    type: isArrival ? 'ARRIVAL' : 'DEPARTURE',
-                    name: name,
-                    pax: pax,
-                    time: time,
-                    minutes: minutesValue,
-                    origin: pickUpPoint,
-                    destination: dropOffPoint,
-                    transportation: transportation,
-                    vehicle: vehicleShort
-                };
-
-                const exists = items.some(existing => existing.name === item.name && existing.time === item.time);
-                if (!exists) items.push(item);
-            });
-
-            items.sort((a, b) => a.minutes - b.minutes);
-            renderPDFResults(items);
-        }
-
-        function convertTimeToMinutes(timeStr) {
-            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-            if (!match) return 9999;
-            let hours = parseInt(match[1], 10);
-            const minutes = parseInt(match[2], 10);
-            const modifier = match[3].toUpperCase();
-
-            if (modifier === 'PM' && hours < 12) hours += 12;
-            if (modifier === 'AM' && hours === 12) hours = 0;
-
-            return hours * 60 + minutes;
-        }
-
-        function renderPDFResults(items) {
-            const container = document.getElementById('mainOutput');
-            document.getElementById('statTotal').innerText = items.length;
-            document.getElementById('statArrivals').innerText = items.filter(i => i.type === 'ARRIVAL').length;
-            document.getElementById('statDepartures').innerText = items.filter(i => i.type === 'DEPARTURE').length;
-
-            container.innerHTML = items.length === 0 ? 
-                '<p class="text-slate-500 text-xs italic text-center py-12">No se encontraron movimientos activos registrados.</p>' : '';
-
-            items.forEach((item, idx) => { container.appendChild(createExecutiveCard(item, idx)); });
-        }
-
-        function generateWhatsAppBlock(item) {
-            const isArr = item.type === 'ARRIVAL';
-            const timeKey = isArr ? 'ETA' : 'ETD';
-            return `*${item.name}* leaving *${item.origin}* on way to *${item.destination}*
-> *${timeKey}:* ${item.time}
-> *Transportation / Driver:* ${item.transportation}
-> *Pax:* ${item.pax}`;
-        }
-
-        function createExecutiveCard(item, idx) {
-            const div = document.createElement('div');
-            const isArrival = item.type === 'ARRIVAL';
-            const timeKey = isArrival ? 'ETA' : 'ETD';
-            const fullWhatsAppText = generateWhatsAppBlock(item);
-
-            div.className = `executive-card relative overflow-hidden glass-panel border border-slate-800 border-l-4 ${isArrival ? 'border-l-emerald-500' : 'border-l-sky-400'} rounded-2xl p-4 flex flex-col gap-3 shadow-lg transition-all duration-300 card-animate`;
-            div.style.animationDelay = `${Math.min(idx * 0.03, 0.4)}s`;
-
-            const badgeColor = isArrival ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20';
-            const vehicleBadge = item.vehicle === 'Sprinter' ? '🚐 Sprinter' : (item.vehicle === 'Suburban' ? '🚙 Suburban' : '🚗 Own');
-
-            div.innerHTML = `
-                <div class="watermark-stamp absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-all opacity-0 scale-95 z-20">
-                  <span class="glass-panel text-blue-400 border-2 border-blue-500/40 px-6 py-2 rounded-2xl font-black text-2xl tracking-widest uppercase shadow-2xl rotate-[-8deg]">✨ CONCLUIDO ✨</span>
-                </div>
-                <div class="flex items-center justify-between gap-1 z-10">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-[9px] px-2 py-0.5 rounded border font-mono font-bold uppercase ${badgeColor} whitespace-nowrap">${isArrival ? 'ARRIVAL' : 'DEPARTURE'}</span>
-                    <span class="text-[9px] px-2 py-0.5 rounded border border-slate-800 bg-slate-900 text-slate-300 font-mono font-semibold whitespace-nowrap">${vehicleBadge}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5 whitespace-nowrap">
-                    <span class="text-[11px] font-mono text-slate-200 font-semibold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${timeKey}: ${item.time}</span>
-                    <span class="text-[10px] font-mono text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">👤 ${item.pax} Pax</span>
-                  </div>
-                </div>
-                <div class="z-10">
-                  <h3 class="text-sm font-bold text-slate-100 tracking-wide">${item.name}</h3>
-                  <p class="text-xs text-slate-400 flex flex-wrap items-center gap-1 mt-1">
-                    <span class="text-slate-500">Ruta:</span> <span class="text-slate-300 font-medium">${item.origin}</span> <span class="text-blue-400">➔</span> <span class="text-slate-300 font-medium">${item.destination}</span>
-                  </p>
-                </div>
-                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80 z-10">
-                  <button onclick="toggleCompletedCard(this)" class="flex-1 sm:flex-none text-xs bg-slate-900 hover:bg-slate-800 text-slate-200 px-3.5 py-2.5 rounded-xl transition font-medium border border-slate-700 flex items-center justify-center gap-1.5 interactive-card"><span>⌛ EN ESPERA</span></button>
-                  <button onclick="copySingleBlock(this, \`${escapeJs(fullWhatsAppText)}\`)" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition font-bold shadow-md shadow-blue-600/20 interactive-card">📋 Copiar Bloque</button>
-                </div>
-            `;
-            return div;
-        }
-
-        function toggleCompletedCard(btnElement) {
-            const card = btnElement.closest('.executive-card');
-            const watermark = card.querySelector('.watermark-stamp');
-            const isCompleted = card.classList.toggle('opacity-40');
-            card.classList.toggle('grayscale');
-            if (isCompleted) {
-                watermark.classList.remove('opacity-0', 'scale-95');
-                watermark.classList.add('opacity-100', 'scale-100');
-                btnElement.innerHTML = "<span>✅ FINALIZADO</span>";
-                btnElement.className = "flex-1 sm:flex-none text-xs bg-slate-900 text-blue-400 px-3.5 py-2.5 rounded-xl transition font-medium border border-blue-500/30 flex items-center justify-center gap-1.5 interactive-card";
-            } else {
-                watermark.classList.remove('opacity-100', 'scale-100');
-                watermark.classList.add('opacity-0', 'scale-95');
-                btnElement.innerHTML = "<span>⌛ EN ESPERA</span>";
-                btnElement.className = "flex-1 sm:flex-none text-xs bg-slate-900 hover:bg-slate-800 text-slate-200 px-3.5 py-2.5 rounded-xl transition font-medium border border-slate-700 flex items-center justify-center gap-1.5 interactive-card";
-            }
-        }
-
-        function copySingleBlock(btnElement, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = btnElement.innerHTML;
-                btnElement.innerHTML = "✅ ¡Copiado!";
-                btnElement.classList.remove('bg-blue-600', 'hover:bg-blue-500', 'text-white');
-                btnElement.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
-                setTimeout(() => {
-                    btnElement.innerHTML = originalText;
-                    btnElement.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
-                    btnElement.classList.add('bg-blue-600', 'hover:bg-blue-500', 'text-white');
-                }, 1500);
-            });
-        }
-
-        function escapeJs(str) { return str.replace(/`/g, '\\`').replace(/\$/g, '\\$'); }
-
-        // --- DATOS DE SECTORES ---
-        const CostaPalmasData = {
-            'sec-1': {
-                name: "Sector 1 — Infraestructura y Servicios", subtitle: "Área de Servicios Generales, Mantenimiento y Planta",
-                badge: "SECTOR 1 (VERDE)", badgeClass: "bg-emerald-500 text-slate-950",
-                accesos: [
-                    { num: 1, desc: "Acceso 1: Caseta de Entrada Principal / Control General." },
-                    { num: 2, desc: "Acceso 2: Filtro Secundario e Ingreso a Áreas Operativas." },
-                    { num: 3, desc: "Acceso 3: Punto de Control Sector Servicios / Mantenimiento." },
-                    { num: 4, desc: "Acceso 4: Cruce de Distribución Interna a Zona Central." }
-                ],
-                infrastructure: [
-                    { title: "Lucha Libre (Outlet)", desc: "Punto operativo y gastronómico oficial." },
-                    { title: "Agua Planta de Tratamiento (PTAR)", desc: "Infraestructura de servicios de agua y reciclaje." },
-                    { title: "Bodega CP Homes & CP", desc: "Almacenaje de bienes inmuebles y suministros." },
-                    { title: "Taller Habilitado HDOS & Beach Club", desc: "Talleres especializados de carpintería y playa." },
-                    { title: "Bodega Península & Fourseasons", desc: "Resguardo logístico y herramientas." },
-                    { title: "Talleres Golf y Jardinería", desc: "Mantenimiento de áreas verdes y maquinaria." },
-                    { title: "Cuarto de Bombas - Garza", desc: "Sistema hidráulico principal." }
-                ]
-            },
-            'sec-2': {
-                name: "Sector 2 — Marina Villas & Yacht Club", subtitle: "Residencias de Marina y Zona Náutica Exclusiva",
-                badge: "SECTOR 2 (AZUL)", badgeClass: "bg-blue-500 text-white",
-                accesos: [
-                    { num: 5, desc: "Acceso 5: Entrada Norte a Zona Marina Villas." },
-                    { num: 6, desc: "Acceso 6: Acceso a Docks y Muelles Principales." }
-                ],
-                infrastructure: [
-                    { title: "Delphine (Outlet)", desc: "Restaurante y punto de interés náutico principal." },
-                    { title: "Beach Front Yacht Villas (Manzana 1)", desc: "Villas M1 con capacidad de amarre exclusivo." },
-                    { title: "Marina Villas (Manzana 8)", desc: "MV8-00 hasta MV8-28 frente a la dársena." },
-                    { title: "Marina Villas (Manzana 9)", desc: "MV09-08 hasta MV09-34." }
-                ]
-            },
-            'sec-3': {
-                name: "Sector 3 — Marina, Mozza & Casa Blake", subtitle: "Centro Urbano, Gastronomía y Club Náutico",
-                badge: "SECTOR 3 (AMARILLO)", badgeClass: "bg-yellow-500 text-slate-950",
-                accesos: [
-                    { num: 7, desc: "Acceso 7: Punto de Control Casa Blake & Centro Comercial." },
-                    { num: 8, desc: "Acceso 8: Ingreso a Restaurante Mozza / Docks Turísticos." }
-                ],
-                infrastructure: [
-                    { title: "Restaurante Mozza (Outlet)", desc: "Área gastronómica italiana y espejos de agua." },
-                    { title: "Vivero", desc: "Zona de producción y resguardo botánico." },
-                    { title: "Casa Blake", desc: "Condominios y Boutique de estilo de vida." },
-                    { title: "Muelles A, B, C y Muelle Mozza", desc: "Infraestructura para embarcaciones turísticas y privadas." }
-                ]
-            },
-            'sec-4': {
-                name: "Sector 4 — Four Seasons Resort & Residences", subtitle: "Zona Hotelera, Golf y Residencias de Lujo",
-                badge: "SECTOR 4 (NARANJA)", badgeClass: "bg-orange-500 text-slate-950",
-                accesos: [{ num: 9, desc: "Acceso 9: Acceso Principal al Lobby y Vialidad Copa de Oro." }],
-                infrastructure: [
-                    { title: "Jimmy's & Bouchies (Outlets)", desc: "Cafetería y puntos gastronómicos exclusivos." },
-                    { title: "The Beach House Pavilion (Outlet)", desc: "Centro de playa y amenidades principales." },
-                    { title: "Lobby FS, Limón & Casa de Braza", desc: "Zona hotelera central y restaurantes insignia." },
-                    { title: "Milos", desc: "Experiencia culinaria de alta gama." },
-                    { title: "Ocean View & Estuary Villas", desc: "Manzanas residenciales panorámicas." }
-                ]
-            },
-            'sec-aman': {
-                name: "Sector Amán — Amanvari Resort & Residences", subtitle: "Zona Hotelera y Desarrollo Amanvari",
-                badge: "ZONA AMÁN (PÚRPURA)", badgeClass: "bg-purple-500 text-white",
-                accesos: [
-                    { num: 10, desc: "Acceso 10: Ingreso a Obras y Módulo de Control Amanvari." },
-                    { num: 11, desc: "Acceso 11: Acceso Poniente de Servicios Aman." }
-                ],
-                infrastructure: [
-                    { title: "Luma & Arva", desc: "Restaurantes insignia de alta cocina en Amanvari." },
-                    { title: "Sesui / Sensui & The Lounge", desc: "Espacios de alta coctelería y gastronomía asiática." },
-                    { title: "Amanvari Resort & Pavilion", desc: "Desarrollo turístico de ultra-lujo." },
-                    { title: "Puente Amán - Beach Club", desc: "Conexión vial principal." }
-                ]
-            }
-        };
-
-        const AccessDirectory = {
-            1: { sector: 'sec-1', name: "Acceso 1" }, 2: { sector: 'sec-1', name: "Acceso 2" },
-            3: { sector: 'sec-1', name: "Acceso 3" }, 4: { sector: 'sec-1', name: "Acceso 4" },
-            5: { sector: 'sec-2', name: "Acceso 5" }, 6: { sector: 'sec-2', name: "Acceso 6" },
-            7: { sector: 'sec-3', name: "Acceso 7" }, 8: { sector: 'sec-3', name: "Acceso 8" },
-            9: { sector: 'sec-4', name: "Acceso 9" }, 10: { sector: 'sec-aman', name: "Acceso 10" },
-            11: { sector: 'sec-aman', name: "Acceso 11" }
-        };
-
-        let currentActiveSec = null;
-        let activeSectorTab = 'general';
-
-        function selectSector(secId) {
-            currentActiveSec = secId;
-            const data = CostaPalmasData[secId];
-            if (!data) return;
-            document.querySelectorAll('.sector-polygon').forEach(p => p.classList.remove('active'));
-            const poly = document.getElementById(`poly-${secId}`);
-            if (poly) poly.classList.add('active');
-
-            document.getElementById('sheetBadge').textContent = data.badge;
-            document.getElementById('sheetBadge').className = `text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-block ${data.badgeClass}`;
-            document.getElementById('sheetTitle').textContent = data.name;
-            document.getElementById('sheetSubtitle').textContent = data.subtitle;
-            switchSectorTab('general');
-            openBottomSheet();
-        }
-
-        function selectAccess(num) {
-            const acc = AccessDirectory[num];
-            if (!acc) return;
-            selectSector(acc.sector);
-            showToast(`Seleccionado ${acc.name}`);
-        }
-
-        function switchSectorTab(tabName) {
-            activeSectorTab = tabName;
-            ['general', 'infrastructure', 'access'].forEach(t => {
-                const btn = document.getElementById(`tabBtn-${t}`);
-                if (btn) {
-                    btn.className = (t === tabName) ? 
-                        "tab-btn py-2 px-2 font-bold text-blue-400 bg-slate-800 rounded-xl text-center shadow transition" : 
-                        "tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition";
-                }
-            });
-            renderSectorTabContent();
-        }
-
-        function renderSectorTabContent() {
-            if (!currentActiveSec) return;
-            const data = CostaPalmasData[currentActiveSec];
-            const container = document.getElementById('sheetBodyContent');
-
-            if (activeSectorTab === 'general') {
-                container.innerHTML = `
-                    <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800"><h4 class="font-bold text-blue-400 text-xs mb-1">Información General</h4><p class="text-slate-300 text-xs leading-relaxed">${data.subtitle}</p></div>
-                    <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800"><h4 class="font-bold text-blue-400 text-xs mb-1">Accesos Asignados</h4><p class="text-slate-300 text-xs">Este sector cuenta con ${data.accesos.length} puntos de control registrados.</p></div>
-                `;
-            } else if (activeSectorTab === 'infrastructure') {
-                container.innerHTML = data.infrastructure.map(item => `
-                    <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800"><h5 class="font-bold text-blue-400 text-xs">${item.title}</h5><p class="text-slate-300 text-[11px] mt-0.5">${item.desc}</p></div>
-                `).join('');
-            } else if (activeSectorTab === 'access') {
-                container.innerHTML = data.accesos.map(acc => `
-                    <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-xs shrink-0 border border-blue-500/30"><i class="fa-solid fa-shield-halved text-[10px]"></i></div>
-                        <p class="text-slate-300 text-[11px]">${acc.desc}</p>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function openBottomSheet() { document.getElementById('bottomSheet').classList.add('open'); }
-        function closeBottomSheet() {
-            document.getElementById('bottomSheet').classList.remove('open');
-            document.querySelectorAll('.sector-polygon').forEach(p => p.classList.remove('active'));
-            currentActiveSec = null;
-        }
-
-        // --- GESTO TÁCTIL AISLADO A LA BARRA SUPERIOR PARA EVITAR TRABAS ---
-        let touchStartY = 0;
-        let currentTranslateY = 0;
-        const bottomSheetElement = document.getElementById('bottomSheet');
-        const dragHandle = bottomSheetElement ? bottomSheetElement.querySelector('.sheet-drag-handle') : null;
-
-        if (bottomSheetElement && dragHandle) {
-            dragHandle.addEventListener('touchstart', (e) => {
-                touchStartY = e.touches[0].clientY;
-                bottomSheetElement.style.transition = 'none';
-            }, { passive: true });
-
-            dragHandle.addEventListener('touchmove', (e) => {
-                const currentY = e.touches[0].clientY;
-                const diffY = currentY - touchStartY;
-                if (diffY > 0) {
-                    currentTranslateY = diffY;
-                    bottomSheetElement.style.transform = `translateY(${currentTranslateY}px)`;
-                }
-            }, { passive: true });
-
-            dragHandle.addEventListener('touchend', () => {
-                bottomSheetElement.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-                if (currentTranslateY > 100) {
-                    closeBottomSheet();
-                } else {
-                    bottomSheetElement.style.transform = 'translateY(0)';
-                }
-                currentTranslateY = 0;
-            });
-        }
-
-        function openEmergencyModal() { document.getElementById('emergencyModal').classList.remove('hidden'); }
-        function closeEmergencyModal() { document.getElementById('emergencyModal').classList.add('hidden'); }
-        function openRadiosModal() { document.getElementById('radiosModal').classList.remove('hidden'); }
-        function closeRadiosModal() { document.getElementById('radiosModal').classList.add('hidden'); }
-
-        function openLightbox(imgSrc) {
-            const lb = document.getElementById('lightboxModal');
-            const img = document.getElementById('lightboxImg');
-            img.src = imgSrc;
-            lb.classList.remove('hidden');
-            lb.classList.add('flex');
-        }
-
-        function closeLightbox() {
-            const lb = document.getElementById('lightboxModal');
-            lb.classList.remove('flex');
-            lb.classList.add('hidden');
-        }
-
-        function copySectorInfo() {
-            if (!currentActiveSec) return;
-            const data = CostaPalmasData[currentActiveSec];
-            let text = `${data.name}\n${data.subtitle}\n\nInfraestructura:\n`;
-            data.infrastructure.forEach(i => text += `- ${i.title}: ${i.desc}\n`);
-            navigator.clipboard.writeText(text).then(() => showToast("Información copiada al portapapeles"));
-        }
-
-        function openModal(member) {
-            const modal = document.getElementById('detailModal');
-            if(!modal) return;
-            document.getElementById('modalImg').src = member.photo;
-            document.getElementById('modalName').innerText = member.name;
-            document.getElementById('modalVilla').innerText = "Villa: " + member.villa + " | Origen: " + member.origin;
-            document.getElementById('modalOpera').innerText = member.opera;
-            document.getElementById('modalZone').innerText = member.zone;
-            document.getElementById('modalTransport').innerText = member.transport;
-            document.getElementById('modalBellman').innerText = member.bellman;
-            document.getElementById('modalPhone').innerText = member.phone;
-            
-            document.getElementById('goToMapBtn').onclick = () => focusOnMember(member.id);
-            document.getElementById('goToGpsBtn').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${member.lat},${member.lng}`, '_blank');
-            modal.classList.remove('hidden');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('detailModal');
-            if(modal) modal.classList.add('hidden');
-        }
-
-        function copyResidentDetails() {
-            const reportText = `[COSTA PALMAS — OPERACIÓN]\nResidente: ${document.getElementById('modalName').innerText}\n${document.getElementById('modalVilla').innerText} | Folio Opera: ${document.getElementById('modalOpera').innerText}\nTransporte: ${document.getElementById('modalTransport').innerText}\nNotas Bellman: ${document.getElementById('modalBellman').innerText}\nTel: ${document.getElementById('modalPhone').innerText}`;
-            navigator.clipboard.writeText(reportText).then(() => showToast("¡Datos copiados para WhatsApp!"));
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMsg').textContent = msg;
-            toast.classList.remove('-translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('-translate-y-20', 'opacity-0'), 2500);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => { checkSession(); });
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </body>
 </html>
 
   <script>
-    function applyFilters() {
+    const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
+const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
+const SHEET_ORIGIN_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1281819744";
+const SHEET_CONFIG_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1458002197";
+
+let membersList = [];
+let originDictionary = {};
+let leafletMap = null;
+let mapMarkersMap = {};
+let activeZoneFilter = 'all';
+let isCompactView = false;
+
+function normalizeString(str) {
+    if (!str) return '';
+    return str.toString().toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[-\s]/g, "");
+}
+
+const OPERA_MAPPING = {
+    "R1-11": "4011", "R1-12": "4012", "R1-21": "4021", "R1-22": "4022", "R1-31": "4031", "R1-32": "4032",
+    "R2-11": "4211", "R2-12": "4212", "R2-13": "4213", "R2-14": "4214", "R2-15": "4215", "R2-16": "4216",
+    "R2-21": "4221", "R2-22": "4222", "R2-23": "4223", "R2-24": "4224", "R2-25": "4225", "R2-26": "4226",
+    "R2-31": "4231", "R2-32": "4232", "R2-33": "4233", "R2-34": "4234",
+    "R5-11": "4411", "R5-12": "4412", "R5-21": "4421", "R5-22": "4422", "R5-31": "4431", "R5-32": "4432",
+    "R6-11": "4611", "R6-12": "4612", "R6-21": "4621", "R6-22": "4622", "R6-31": "4631", "R6-32": "4632",
+    "R7-11": "4811", "R7-12": "4812", "R7-21": "4821", "R7-22": "4822", "R7-31": "4831", "R7-32": "4832",
+    "BFC-01": "5010", "BFC-02": "5020", "BFC-03": "5030", "BFC-04": "5040", "BFC-05": "5050", "BFC-06": "5060",
+    "BFV-00": "5120", "BFV-0": "5130", "BFV-01": "5140", "BFV-02": "5150", "BFV-05": "5180", "BFV-06": "5190",
+    "BFV-07": "5200", "BFV-09": "5220", "BFV-11": "5240", "BFV-12": "5250", "EV-14": "5270", "EV-15": "5280", "EV-17": "5300",
+    "BCC-02": "5400", "BCC-03": "5410", "BCC-04": "5420", "BCC-05": "5430", "BCC-06": "5440", "BCC-07": "5450", "BCC-08": "5460",
+    "OVV18": "5500", "OVV19": "5510", "OVV20": "5520", "OVV21": "5530", "OVV22": "5540", "OVV23": "5550", "OVV24": "5560",
+    "SV-09": "5709", "SV-11": "5711", "SV-12": "5712", "SV-13": "5713", "SV-14": "5714", "SV-15": "5715", "SV-16": "5716", "SV-17": "5717", "SV-18": "5718",
+    "R3-101": "6101", "R3-102": "6102", "R3-103": "6103", "R3-104": "6104", "R3-105": "6105", "R3-106": "6106", "R3-107": "6107", "R3-108": "6108", "R3-109": "6109", "R3-110": "6110", "R3-111": "6111", "R3-112": "6112",
+    "R3-201": "6201", "R3-202": "6202", "R3-203": "6203", "R3-204": "6204", "R3-205": "6205", "R3-206": "6206", "R3-207": "6207", "R3-208": "6208", "R3-209": "6209", "R3-210": "6210", "R3-211": "6211", "R3-212": "6212",
+    "R3-301": "6301", "R3-302": "6302", "R3-303": "6303", "R3-304": "6304", "R3-305": "6305", "R3-306": "6306", "R3-307": "6307", "R3-308": "6308", "R3-309": "6309", "R3-310": "6310", "R3-311": "6311", "R3-312": "6312",
+    "MV-16": "7316", "MV-17": "7317", "MV-28": "7328"
+};
+
+function getOperaId(villa) {
+    if (!villa) return "N/D";
+    const clean = villa.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    for (const [key, val] of Object.entries(OPERA_MAPPING)) {
+        if (clean.includes(key) || key.includes(clean)) return val;
+    }
+    return "N/D";
+}
+
+async function handleAuth() {
+    const userInput = document.getElementById('auth-user').value.trim().toLowerCase();
+    const passInput = document.getElementById('auth-pass').value.trim();
+    const authBtn = document.getElementById('auth-btn');
+
+    if (!userInput || !passInput) {
+        alert('Por favor, ingresa tu usuario y contraseña.');
+        return;
+    }
+
+    authBtn.innerText = "Verificando acceso...";
+    authBtn.disabled = true;
+
+    const localUsers = {
+        "xasharitl": "123456", "francisco": "123456", "esteban": "123456", "fernando": "123456",
+        "ignacio": "123456", "mozza": "123456", "delphine": "123456", "danielc": "123456",
+        "juanc": "123456", "josel": "123456", "ulises": "123456", "diego": "123456", "dorman": "123456"
+    };
+
+    if (localUsers[userInput] && localUsers[userInput] === passInput) {
+        localStorage.setItem('cp_logged_user', userInput);
+        checkSession();
+        return;
+    }
+
+    try {
+        const resOrigin = await fetch(SHEET_ORIGIN_URL);
+        if (!resOrigin.ok) throw new Error("Error de red");
+        const textOrigin = await resOrigin.text();
+        const lines = textOrigin.split("\n");
+        let authenticated = false;
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cols = parseCSVLine(lines[i]);
+            if ((cols[0] || "").trim().toLowerCase() === userInput && (cols[1] || "").trim() === passInput) {
+                authenticated = true;
+                break;
+            }
+        }
+
+        if (authenticated) {
+            localStorage.setItem('cp_logged_user', userInput);
+            checkSession();
+        } else {
+            alert('Usuario o contraseña incorrectos.');
+            authBtn.innerText = "Iniciar Sesión";
+            authBtn.disabled = false;
+        }
+    } catch (error) {
+        alert('⚠️ Error de conexión con la nube.');
+        authBtn.innerText = "Iniciar Sesión";
+        authBtn.disabled = false;
+    }
+}
+
+function checkSession() {
+    const loggedUser = localStorage.getItem('cp_logged_user');
+    const authScreen = document.getElementById('auth-screen');
+    const badgeBtn = document.getElementById('userBadgeBtn');
+
+    if (!loggedUser) {
+        authScreen.style.display = 'flex';
+    } else {
+        authScreen.style.display = 'none';
+        if (badgeBtn) badgeBtn.innerText = loggedUser.substring(0, 2).toUpperCase();
+        loadSheetData();
+        loadCompanyLogo();
+    }
+}
+
+async function loadCompanyLogo() {
+    try {
+        const res = await fetch(SHEET_CONFIG_URL);
+        if (!res.ok) return;
+        const text = await res.text();
+        const lines = text.split("\n");
+        if (lines.length > 1) {
+            const cols = parseCSVLine(lines[1]);
+            const logoUrl = (cols[0] || "").trim();
+            if (logoUrl.startsWith('http')) {
+                const container = document.getElementById('companyLogoContainer');
+                if (container) {
+                    container.innerHTML = `<img src="${logoUrl}" alt="Logo CP" class="w-full h-full object-cover">`;
+                }
+            }
+        }
+    } catch(e) {}
+}
+
+function toggleAdminPanel() {
+    const modal = document.getElementById('admin-modal');
+    const isHidden = modal.classList.contains('hidden');
+    if (isHidden) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        const currentUser = localStorage.getItem('cp_logged_user') || 'operador';
+        document.getElementById('profile-user').value = currentUser;
+        const savedProfile = JSON.parse(localStorage.getItem('cp_profile_' + currentUser) || '{}');
+        document.getElementById('profile-name').value = savedProfile.name || (currentUser.toUpperCase() + ' — Bellman & Security');
+    } else {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+}
+
+function saveProfileData() {
+    const currentUser = localStorage.getItem('cp_logged_user');
+    const name = document.getElementById('profile-name').value.trim();
+    localStorage.setItem('cp_profile_' + currentUser, JSON.stringify({ name }));
+    showToast('¡Datos guardados exitosamente!');
+    toggleAdminPanel();
+}
+
+function clearActiveSession() {
+    if (confirm('¿Deseas cerrar la sesión activa?')) {
+        localStorage.removeItem('cp_logged_user');
+        location.reload();
+    }
+}
+
+function cleanKey(str) {
+    if (!str) return "";
+    return str.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+async function loadSheetData() {
+    const syncEl = document.getElementById('syncStatus');
+    const syncDot = document.getElementById('syncIndicatorDot');
+
+    try {
+        let coordsDictionary = {};
+        try {
+            const resCoords = await fetch(SHEET_COORD_URL);
+            if (resCoords.ok) coordsDictionary = parseCoordsCSV(await resCoords.text());
+        } catch(e) {}
+
+        try {
+            const resOrigin = await fetch(SHEET_ORIGIN_URL);
+            if (resOrigin.ok) originDictionary = parseOriginCSV(await resOrigin.text());
+        } catch(e) {}
+
+        const resMembers = await fetch(SHEET_MEMBERS_URL);
+        if (!resMembers.ok) throw new Error("Error miembros");
+        parseCSV(await resMembers.text(), coordsDictionary);
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (syncEl) syncEl.innerText = `Sincronizado (${timeString})`;
+        if (syncDot) syncDot.className = "w-2 h-2 rounded-full bg-green-400";
+    } catch (error) {
+        const listEl = document.getElementById('residentList');
+        if (listEl) listEl.innerHTML = `<div class="col-span-2 text-center py-10 text-red-400 text-sm">⚠️ Error al conectar con las hojas de cálculo.</div>`;
+        if (syncEl) syncEl.innerText = `Error de conexión`;
+        if (syncDot) syncDot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
+    }
+}
+
+function parseOriginCSV(text) {
+    const lines = text.split("\n");
+    const originMap = {};
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+        const key = cleanKey(cols[0] || "");
+        if (key) originMap[key] = cols[1] || "";
+    }
+    return originMap;
+}
+
+function parseCoordsCSV(text) {
+    const lines = text.split("\n");
+    const coordsMap = {};
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+        const latVal = parseFloat(cols[1]);
+        const lngVal = parseFloat(cols[2]);
+        const key = cleanKey(cols[cols.length - 1] || cols[4] || "");
+        if (key && !isNaN(latVal) && !isNaN(lngVal)) coordsMap[key] = { lat: latVal, lng: lngVal };
+    }
+    return coordsMap;
+}
+
+function findLocation(rawVilla, coordsMap) {
+    if (!rawVilla) return null;
+    const key = cleanKey(rawVilla);
+    if (key.includes('MC10') || key.includes('M10L') || key.includes('M15L')) return null;
+    if (key.startsWith('R1') || key.startsWith('R2') || key.startsWith('R3')) {
+        return { lat: 23.6089788290, lng: -109.588890271 };
+    }
+    if (coordsMap[key]) return coordsMap[key];
+    const buildingMatch = key.match(/^([A-Z]+\d+)/);
+    if (buildingMatch && coordsMap[buildingMatch[1]]) return coordsMap[buildingMatch[1]];
+    return null;
+}
+
+function parseCSV(text, coordsMap) {
+    const lines = text.split("\n");
+    membersList = [];
+    const defaultLat = 23.609724386;
+    const defaultLng = -109.5943928;
+
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+        if (cols.length >= 2 && cols[1]) {
+            const rawVilla = cols[3] || "";
+            let latVal = parseFloat(cols[5]);
+            let lngVal = parseFloat(cols[6]);
+
+            if (isNaN(latVal) || isNaN(lngVal)) {
+                const mapLoc = findLocation(rawVilla, coordsMap);
+                latVal = mapLoc ? mapLoc.lat : defaultLat;
+                lngVal = mapLoc ? mapLoc.lng : defaultLng;
+            }
+
+            const memberName = cols[1];
+            membersList.push({
+                id: cols[0] || i,
+                name: memberName,
+                zone: cols[2] || "Beach & Yacht Club",
+                villa: rawVilla || "N/D",
+                photo: cols[4] && cols[4].startsWith('http') ? cols[4] : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+                lat: latVal,
+                lng: lngVal,
+                transport: cols[7] || "Sin preferencias especiales de transporte.", 
+                bellman: cols[8] || "Sin notas específicas para bellman.",          
+                phone: cols[9] || "N/A",
+                origin: originDictionary[cleanKey(memberName)] || "N/D",
+                opera: getOperaId(rawVilla)
+            });
+        }
+    }
+    buildDynamicFilters(membersList);
+    applyFilters();
+}
+
+function parseCSVLine(line) {
+    const cols = [];
+    let inQuotes = false;
+    let current = '';
+    for (let char of line) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) {
+            cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
+            current = '';
+        } else current += char;
+    }
+    cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
+    return cols;
+}
+
+function buildDynamicFilters(dataList) {
+    const container = document.getElementById('zoneFiltersContainer');
+    if (!container) return;
+
+    const uniqueZones = [...new Set(dataList.map(m => m.zone ? m.zone.trim() : 'Sin Zona'))];
+    container.innerHTML = '';
+
+    const allBtn = document.createElement('button');
+    allBtn.className = getButtonClass('all', activeZoneFilter);
+    allBtn.innerText = 'Todas';
+    allBtn.onclick = () => filterByDynamicZone('all');
+    container.appendChild(allBtn);
+
+    uniqueZones.forEach(zone => {
+        const btn = document.createElement('button');
+        btn.className = getButtonClass(zone, activeZoneFilter);
+        btn.innerText = zone;
+        btn.onclick = () => filterByDynamicZone(zone);
+        container.appendChild(btn);
+    });
+}
+
+function getButtonClass(zone, currentFilter) {
+    const isActive = zone === currentFilter;
+    return isActive 
+        ? "px-3.5 py-1.5 rounded-full font-semibold bg-blue-600 text-white shrink-0 shadow-md shadow-blue-600/20 transition-all cursor-pointer interactive-card" 
+        : "px-3.5 py-1.5 rounded-full font-medium glass-panel text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-all cursor-pointer interactive-card";
+}
+
+function filterByDynamicZone(zone) {
+    activeZoneFilter = zone;
+    buildDynamicFilters(membersList);
+    applyFilters();
+}
+
+function toggleViewMode() {
+    isCompactView = !isCompactView;
+    const icon = document.getElementById('viewModeIcon');
+    const text = document.getElementById('viewModeText');
+    const container = document.getElementById('residentList');
+
+    if (isCompactView) {
+        icon.className = "fa-solid fa-border-all";
+        if(text) text.innerText = "Tarjetas";
+        container.className = "flex flex-col gap-2 p-4";
+    } else {
+        icon.className = "fa-solid fa-list";
+        if(text) text.innerText = "Lista";
+        container.className = "grid grid-cols-2 gap-3 p-4";
+    }
+    applyFilters();
+}
+
+function renderDirectory(list) {
+    const container = document.getElementById('residentList');
+    if(!container) return;
+    container.innerHTML = '';
+
+    if(list.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-2 text-center py-12 px-4 space-y-3 glass-panel rounded-3xl border border-slate-800 my-4 shadow-inner">
+                <div class="w-12 h-12 bg-slate-900 text-slate-400 rounded-2xl flex items-center justify-center mx-auto text-lg border border-slate-800">
+                    <i class="fa-solid fa-user-slash"></i>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm">Sin resultados</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">No se encontró coincidencia por nombre, villa, zona o Folio Opera.</p>
+                </div>
+                <button onclick="clearSearch()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">Limpiar búsqueda</button>
+            </div>
+        `;
+        return;
+    }
+
+    list.forEach((member, index) => {
+        const card = document.createElement('div');
+        const delay = Math.min(index * 0.03, 0.5);
+
+        if (isCompactView) {
+            card.className = "glass-panel p-2.5 rounded-2xl border border-slate-800/80 shadow-md flex items-center justify-between cursor-pointer interactive-card text-slate-100 card-animate";
+            card.style.animationDelay = `${delay}s`;
+            card.onclick = () => openModal(member);
+
+            card.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <img src="${member.photo}" alt="${member.name}" class="w-11 h-11 rounded-xl object-cover border border-slate-700 shadow-sm">
+                    <div>
+                        <h3 class="font-bold text-xs text-white">${member.name}</h3>
+                        <p class="text-[10px] text-blue-400 font-mono">Villa: ${member.villa} | ${member.zone}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="event.stopPropagation(); openLightbox('${member.photo}')" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-blue-400 flex items-center justify-center text-xs" title="Ver foto">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 flex items-center justify-center text-xs" title="Mapa GPS">
+                        <i class="fa-solid fa-map-pin"></i>
+                    </button>
+                </div>
+            `;
+        } else {
+            card.className = "glass-panel p-3.5 rounded-2xl border border-slate-800/80 shadow-md flex flex-col items-center text-center cursor-pointer interactive-card text-slate-100 gap-2 card-animate";
+            card.style.animationDelay = `${delay}s`;
+            card.onclick = () => openModal(member);
+
+            card.innerHTML = `
+                <img src="${member.photo}" alt="${member.name}" class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-700 shadow-md mt-1">
+                <div class="flex-1 flex flex-col items-center w-full">
+                    <h3 class="font-bold text-xs line-clamp-1 w-full text-white">${member.name}</h3>
+                    <span onclick="event.stopPropagation(); focusOnMember('${member.id}')" class="text-[11px] text-blue-400 font-semibold hover:underline inline-flex items-center gap-1 mt-0.5 font-mono">
+                        <i class="fa-solid fa-map-pin text-[9px]"></i> ${member.villa}
+                    </span>
+                    <span class="text-[9px] text-slate-400 bg-slate-900/80 border border-slate-800 px-2.5 py-0.5 rounded-lg mt-1.5 truncate max-w-full">${member.zone}</span>
+                </div>
+            `;
+        }
+        container.appendChild(card);
+    });
+}
+
+function filterDirectory() {
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (searchInput && clearBtn) {
+        if (searchInput.value.trim().length > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+    }
+    applyFilters();
+}
+
+function clearSearch() {
+    const input = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (input) {
+        input.value = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
+        applyFilters();
+        input.focus();
+    }
+}
+
+function applyFilters() {
     const searchEl = document.getElementById('searchInput');
     const query = normalizeString(searchEl ? searchEl.value : '');
     
@@ -1708,7 +1051,6 @@
         
         let matchesZone = true;
         if (activeZoneFilter !== 'all') {
-            // Validación exacta para evitar que "Yacht Club" mezcle "Beach & Yacht Club"
             const memberZoneClean = (m.zone || '').trim().toLowerCase();
             const filterClean = activeZoneFilter.trim().toLowerCase();
             matchesZone = (memberZoneClean === filterClean);
@@ -1719,6 +1061,588 @@
     renderDirectory(filtered);
 }
 
+function focusOnMember(memberId) {
+    const member = membersList.find(m => m.id == memberId);
+    if (!member) return;
+    closeModal();
+    openMapModal(member);
+}
+
+function openMapModal(member) {
+    const mapModal = document.getElementById('mapModal');
+    mapModal.classList.remove('hidden');
+    mapModal.classList.add('flex');
+
+    setTimeout(() => {
+        if (!leafletMap) {
+            initLeafletMap(member);
+        } else {
+            leafletMap.invalidateSize();
+            leafletMap.setView([member.lat, member.lng], 18);
+            updateLeafletMarkers([member]);
+        }
+    }, 150);
+}
+
+function closeMapModal() {
+    const mapModal = document.getElementById('mapModal');
+    mapModal.classList.remove('flex');
+    mapModal.classList.add('hidden');
+}
+
+function switchTab(tab) {
+    const dirView = document.getElementById('view-directory');
+    const transView = document.getElementById('view-transport');
+    const svgView = document.getElementById('view-map-svg');
+    const sectorBar = document.getElementById('sectorBottomBar');
+    
+    const navDir = document.getElementById('nav-dir');
+    const navTrans = document.getElementById('nav-trans');
+    const navSvg = document.getElementById('nav-svg');
+
+    if(dirView) dirView.classList.add('hidden');
+    if(transView) transView.classList.add('hidden');
+    if(svgView) svgView.classList.add('hidden');
+    if(sectorBar) sectorBar.classList.add('hidden');
+
+    const inactiveColor = "flex flex-col items-center text-slate-400 hover:text-slate-200 transition-colors py-1 px-3 rounded-xl";
+    if(navDir) navDir.className = inactiveColor;
+    if(navTrans) navTrans.className = inactiveColor;
+    if(navSvg) navSvg.className = inactiveColor;
+
+    if(tab === 'directory') {
+        if(dirView) dirView.classList.remove('hidden');
+        if(navDir) navDir.className = "flex flex-col items-center text-blue-400 transition-colors py-1 px-3 rounded-xl";
+    } else if(tab === 'transport') {
+        if(transView) transView.classList.remove('hidden');
+        if(navTrans) navTrans.className = "flex flex-col items-center text-blue-400 transition-colors py-1 px-3 rounded-xl";
+    } else if(tab === 'svg') {
+        if(svgView) svgView.classList.remove('hidden');
+        if(sectorBar) sectorBar.classList.remove('hidden');
+        if(navSvg) navSvg.className = "flex flex-col items-center text-blue-400 transition-colors py-1 px-3 rounded-xl";
+    }
+}
+
+function initLeafletMap(targetMember) {
+    const mapContainer = document.getElementById('leaflet-map');
+    if(!mapContainer) return;
+
+    const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, minZoom: 14 });
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, minZoom: 14 });
+
+    const startLat = targetMember ? targetMember.lat : 23.609724386;
+    const startLng = targetMember ? targetMember.lng : -109.5943928;
+
+    leafletMap = L.map('leaflet-map', {
+        center: [startLat, startLng],
+        zoom: targetMember ? 18 : 16,
+        minZoom: 14, maxZoom: 19,
+        layers: [satelliteLayer]
+    });
+
+    L.control.layers({ "Estándar": standardLayer, "Satelital": satelliteLayer }).addTo(leafletMap);
+    updateLeafletMarkers(targetMember ? [targetMember] : membersList);
+    setTimeout(() => { leafletMap.invalidateSize(); }, 200);
+}
+
+function updateLeafletMarkers(list) {
+    if (!leafletMap) return;
+    Object.values(mapMarkersMap).forEach(m => leafletMap.removeLayer(m));
+    mapMarkersMap = {};
+
+    list.forEach(member => {
+        const marker = L.marker([member.lat, member.lng]).addTo(leafletMap);
+        marker.bindPopup(`<b>${member.name}</b><br>Villa: ${member.villa}<br>Folio Opera: ${member.opera}<br>Origen: ${member.origin}<br>${member.zone}`);
+        marker.on('click', () => openModal(member));
+        mapMarkersMap[member.id] = marker;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const pdfInput = document.getElementById('pdfInput');
+    if (pdfInput) {
+        pdfInput.addEventListener('change', (e) => {
+            const btn = document.getElementById('processBtn');
+            if (e.target.files.length > 0) {
+                btn.disabled = false;
+                btn.className = "w-full sm:w-auto px-5 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-lg shadow-blue-600/20 uppercase tracking-wider whitespace-nowrap hover:bg-blue-500 interactive-card";
+            }
+        });
+    }
+    checkSession();
+});
+
+function resetAppPDF() {
+    document.getElementById('pdfInput').value = "";
+    const btn = document.getElementById('processBtn');
+    btn.disabled = true;
+    btn.className = "w-full sm:w-auto px-5 py-2.5 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl transition-all cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider whitespace-nowrap";
+    document.getElementById('mainOutput').innerHTML = '<p class="text-slate-500 text-xs italic text-center py-12">Cargue el archivo PDF para desplegar la agenda ejecutiva de transportación.</p>';
+    document.getElementById('statTotal').innerText = "0";
+    document.getElementById('statArrivals').innerText = "0";
+    document.getElementById('statDepartures').innerText = "0";
+}
+
+async function processPDF() {
+    const fileInput = document.getElementById('pdfInput');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const statusContainer = document.getElementById('statusContainer');
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('statusText');
+    const statusPercent = document.getElementById('statusPercent');
+
+    statusContainer.classList.remove('hidden');
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const totalPages = pdfDoc.numPages;
+        let fullText = "";
+
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+            const page = await pdfDoc.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageStrings = textContent.items.map(item => item.str);
+            fullText += "\n" + pageStrings.join(" ");
+
+            const percent = Math.round((pageNum / totalPages) * 100);
+            progressBar.style.width = percent + "%";
+            statusPercent.innerText = percent + "%";
+            statusText.innerText = `Procesando página ${pageNum} de ${totalPages}...`;
+        }
+
+        statusText.innerText = "Organizando cronograma...";
+        parseReservationsReport(fullText);
+        statusText.innerText = "¡Procesamiento completo!";
+        setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+    } catch (error) {
+        console.error("Error al procesar PDF:", error);
+        alert("Ocurrió un error al leer el documento.");
+        statusContainer.classList.add('hidden');
+    }
+}
+
+function parseReservationsReport(text) {
+    const items = [];
+    const blocks = text.split(/(?=(?:SJD Airport|FBO Private Airport)\s*[-–]\s*(?:Departure|Arrival)|(?:SJD Airport|FBO Private Airport)\s*Arrival)/gi);
+
+    blocks.forEach(block => {
+        if (!block.trim()) return;
+
+        const headerSnippet = block.substring(0, 40);
+        const isArrival = /Arrival/i.test(headerSnippet);
+        const isDeparture = /Departure/i.test(headerSnippet);
+
+        if (!isArrival && !isDeparture) return;
+        if (/Canceled|Cancelled/i.test(block)) return;
+
+        let name = "";
+        const nameMatch = block.match(/Name:\s*([A-Za-z\s&]+?)(?=\s+Number of Guest|$)/i) ||
+                          block.match(/Player\s*1:\s*[A-Z0-9\-]+\s*[-–]\s*(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Za-z\s&]+)/i);
+        
+        if (nameMatch && nameMatch[1]) {
+            name = nameMatch[1].trim().replace(/\s+/g, ' ');
+        }
+        if (!name || name.length < 3) return;
+
+        let pax = "1";
+        const paxMatch = block.match(/Number of Guest:\s*(\d{1,2})/i);
+        if (paxMatch) pax = paxMatch[1].trim();
+
+        let time = "TBC";
+        let minutesValue = 9999;
+
+        if (isArrival) {
+            const dropTimeMatch = block.match(/Drop-off time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
+            const pickTimeArrival = block.match(/Pick-up time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
+            const timeToUse = dropTimeMatch ? dropTimeMatch[1] : (pickTimeArrival ? pickTimeArrival[1] : null);
+            if (timeToUse) {
+                time = timeToUse.trim();
+                minutesValue = convertTimeToMinutes(time);
+            }
+        } else {
+            const pickTimeMatch = block.match(/Pick-up time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
+            if (pickTimeMatch && pickTimeMatch[1]) {
+                time = pickTimeMatch[1].trim();
+                minutesValue = convertTimeToMinutes(time);
+            }
+        }
+
+        let pickUpPoint = "";
+        let dropOffPoint = "";
+
+        const pickMatch = block.match(/Pick-up point:\s*([^\n]+?)(?=\s+(?:Drop-off point:|Drop-off time|Transportation|Reservation|Flight|$))/i);
+        if (pickMatch && pickMatch[1]) pickUpPoint = pickMatch[1].trim().replace(/\s+/g, ' ');
+
+        const dropMatch = block.match(/Drop-off point:\s*([^\n]+?)(?=\s+(?:Drop-off time|Pick-up time|Transportation|Reservation|Flight|$))/i);
+        if (dropMatch && dropMatch[1]) dropOffPoint = dropMatch[1].trim().replace(/\s+/g, ' ');
+
+        if (/Four Seasons|FS Lobby/i.test(pickUpPoint)) pickUpPoint = "Four Seasons Lobby";
+        if (/Four Seasons|FS Lobby/i.test(dropOffPoint)) dropOffPoint = "Four Seasons Lobby";
+
+        if (!pickUpPoint) pickUpPoint = isArrival ? "SJD International Airport" : "Four Seasons Lobby";
+        if (!dropOffPoint) dropOffPoint = isArrival ? "Four Seasons Lobby" : "SJD International Airport";
+
+        if (/FBO Private Airport/i.test(headerSnippet)) {
+            if (isArrival) pickUpPoint = "FBO Private Airport CSL";
+            else dropOffPoint = "FBO Private Airport CSL";
+        }
+
+        let vehicleShort = "Suburban";
+        if (/SPRINTER/i.test(block) || /Sprinter/i.test(block)) vehicleShort = "Sprinter";
+        else if (/SUV/i.test(block) || /Suburban/i.test(block)) vehicleShort = "Suburban";
+
+        let transportation = `Transcabo Beach House, One ${vehicleShort}`;
+        if (/Own/i.test(block)) {
+            transportation = "Own Transportation";
+            vehicleShort = "Own Trans.";
+        }
+
+        const item = {
+            type: isArrival ? 'ARRIVAL' : 'DEPARTURE',
+            name: name,
+            pax: pax,
+            time: time,
+            minutes: minutesValue,
+            origin: pickUpPoint,
+            destination: dropOffPoint,
+            transportation: transportation,
+            vehicle: vehicleShort
+        };
+
+        const exists = items.some(existing => existing.name === item.name && existing.time === item.time);
+        if (!exists) items.push(item);
+    });
+
+    items.sort((a, b) => a.minutes - b.minutes);
+    renderPDFResults(items);
+}
+
+function convertTimeToMinutes(timeStr) {
+    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) return 9999;
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const modifier = match[3].toUpperCase();
+
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+
+    return hours * 60 + minutes;
+}
+
+function renderPDFResults(items) {
+    const container = document.getElementById('mainOutput');
+    document.getElementById('statTotal').innerText = items.length;
+    document.getElementById('statArrivals').innerText = items.filter(i => i.type === 'ARRIVAL').length;
+    document.getElementById('statDepartures').innerText = items.filter(i => i.type === 'DEPARTURE').length;
+
+    container.innerHTML = items.length === 0 ? 
+        '<p class="text-slate-500 text-xs italic text-center py-12">No se encontraron movimientos activos registrados.</p>' : '';
+
+    items.forEach((item, idx) => { container.appendChild(createExecutiveCard(item, idx)); });
+}
+
+function generateWhatsAppBlock(item) {
+    const isArr = item.type === 'ARRIVAL';
+    const timeKey = isArr ? 'ETA' : 'ETD';
+    return `*${item.name}* leaving *${item.origin}* on way to *${item.destination}*
+> *${timeKey}:* ${item.time}
+> *Transportation / Driver:* ${item.transportation}
+> *Pax:* ${item.pax}`;
+}
+
+function createExecutiveCard(item, idx) {
+    const div = document.createElement('div');
+    const isArrival = item.type === 'ARRIVAL';
+    const timeKey = isArrival ? 'ETA' : 'ETD';
+    const fullWhatsAppText = generateWhatsAppBlock(item);
+
+    div.className = `executive-card relative overflow-hidden glass-panel border border-slate-800 border-l-4 ${isArrival ? 'border-l-emerald-500' : 'border-l-sky-400'} rounded-2xl p-4 flex flex-col gap-3 shadow-lg transition-all duration-300 card-animate`;
+    div.style.animationDelay = `${Math.min(idx * 0.03, 0.4)}s`;
+
+    const badgeColor = isArrival ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+    const vehicleBadge = item.vehicle === 'Sprinter' ? '🚐 Sprinter' : (item.vehicle === 'Suburban' ? '🚙 Suburban' : '🚗 Own');
+
+    div.innerHTML = `
+        <div class="watermark-stamp absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-all opacity-0 scale-95 z-20">
+          <span class="glass-panel text-blue-400 border-2 border-blue-500/40 px-6 py-2 rounded-2xl font-black text-2xl tracking-widest uppercase shadow-2xl rotate-[-8deg]">✨ CONCLUIDO ✨</span>
+        </div>
+        <div class="flex items-center justify-between gap-1 z-10">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-[9px] px-2 py-0.5 rounded border font-mono font-bold uppercase ${badgeColor} whitespace-nowrap">${isArrival ? 'ARRIVAL' : 'DEPARTURE'}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded border border-slate-800 bg-slate-900 text-slate-300 font-mono font-semibold whitespace-nowrap">${vehicleBadge}</span>
+          </div>
+          <div class="flex items-center gap-1.5 whitespace-nowrap">
+            <span class="text-[11px] font-mono text-slate-200 font-semibold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${timeKey}: ${item.time}</span>
+            <span class="text-[10px] font-mono text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">👤 ${item.pax} Pax</span>
+          </div>
+        </div>
+        <div class="z-10">
+          <h3 class="text-sm font-bold text-slate-100 tracking-wide">${item.name}</h3>
+          <p class="text-xs text-slate-400 flex flex-wrap items-center gap-1 mt-1">
+            <span class="text-slate-500">Ruta:</span> <span class="text-slate-300 font-medium">${item.origin}</span> <span class="text-blue-400">➔</span> <span class="text-slate-300 font-medium">${item.destination}</span>
+          </p>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80 z-10">
+          <button onclick="toggleCompletedCard(this)" class="flex-1 sm:flex-none text-xs bg-slate-900 hover:bg-slate-800 text-slate-200 px-3.5 py-2.5 rounded-xl transition font-medium border border-slate-700 flex items-center justify-center gap-1.5 interactive-card"><span>⌛ EN ESPERA</span></button>
+          <button onclick="copySingleBlock(this, \`${escapeJs(fullWhatsAppText)}\`)" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition font-bold shadow-md shadow-blue-600/20 interactive-card">📋 Copiar Bloque</button>
+        </div>
+    `;
+    return div;
+}
+
+function toggleCompletedCard(btnElement) {
+    const card = btnElement.closest('.executive-card');
+    const watermark = card.querySelector('.watermark-stamp');
+    const isCompleted = card.classList.toggle('opacity-40');
+    card.classList.toggle('grayscale');
+    if (isCompleted) {
+        watermark.classList.remove('opacity-0', 'scale-95');
+        watermark.classList.add('opacity-100', 'scale-100');
+        btnElement.innerHTML = "<span>✅ FINALIZADO</span>";
+        btnElement.className = "flex-1 sm:flex-none text-xs bg-slate-900 text-blue-400 px-3.5 py-2.5 rounded-xl transition font-medium border border-blue-500/30 flex items-center justify-center gap-1.5 interactive-card";
+    } else {
+        watermark.classList.remove('opacity-100', 'scale-100');
+        watermark.classList.add('opacity-0', 'scale-95');
+        btnElement.innerHTML = "<span>⌛ EN ESPERA</span>";
+        btnElement.className = "flex-1 sm:flex-none text-xs bg-slate-900 hover:bg-slate-800 text-slate-200 px-3.5 py-2.5 rounded-xl transition font-medium border border-slate-700 flex items-center justify-center gap-1.5 interactive-card";
+    }
+}
+
+function copySingleBlock(btnElement, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = btnElement.innerHTML;
+        btnElement.innerHTML = "✅ ¡Copiado!";
+        btnElement.classList.remove('bg-blue-600', 'hover:bg-blue-500', 'text-white');
+        btnElement.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
+        setTimeout(() => {
+            btnElement.innerHTML = originalText;
+            btnElement.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
+            btnElement.classList.add('bg-blue-600', 'hover:bg-blue-500', 'text-white');
+        }, 1500);
+    });
+}
+
+function escapeJs(str) { return str.replace(/`/g, '\\`').replace(/\$/g, '\\$'); }
+
+const CostaPalmasData = {
+    'sec-1': {
+        name: "Sector 1 — Infraestructura y Servicios", subtitle: "Área de Servicios Generales, Mantenimiento y Planta",
+        badge: "SECTOR 1 (VERDE)", badgeClass: "bg-emerald-500 text-slate-950",
+        accesos: [
+            { num: 1, desc: "Acceso 1: Caseta de Entrada Principal / Control General." },
+            { num: 2, desc: "Acceso 2: Filtro Secundario e Ingreso a Áreas Operativas." },
+            { num: 3, desc: "Acceso 3: Punto de Control Sector Servicios / Mantenimiento." },
+            { num: 4, desc: "Acceso 4: Cruce de Distribución Interna a Zona Central." }
+        ],
+        infrastructure: [
+            { title: "Lucha Libre (Outlet)", desc: "Punto operativo y gastronómico oficial." },
+            { title: "Agua Planta de Tratamiento (PTAR)", desc: "Infraestructura de servicios de agua y reciclaje." },
+            { title: "Bodega CP Homes & CP", desc: "Almacenaje de bienes inmuebles y suministros." },
+            { title: "Taller Habilitado HDOS & Beach Club", desc: "Talleres especializados de carpintería y playa." },
+            { title: "Bodega Península & Fourseasons", desc: "Resguardo logístico y herramientas." },
+            { title: "Talleres Golf y Jardinería", desc: "Mantenimiento de áreas verdes y maquinaria." },
+            { title: "Cuarto de Bombas - Garza", desc: "Sistema hidráulico principal." }
+        ]
+    },
+    'sec-2': {
+        name: "Sector 2 — Marina Villas & Yacht Club", subtitle: "Residencias de Marina y Zona Náutica Exclusiva",
+        badge: "SECTOR 2 (AZUL)", badgeClass: "bg-blue-500 text-white",
+        accesos: [
+            { num: 5, desc: "Acceso 5: Entrada Norte a Zona Marina Villas." },
+            { num: 6, desc: "Acceso 6: Acceso a Docks y Muelles Principales." }
+        ],
+        infrastructure: [
+            { title: "Delphine (Outlet)", desc: "Restaurante y punto de interés náutico principal." },
+            { title: "Beach Front Yacht Villas (Manzana 1)", desc: "Villas M1 con capacidad de amarre exclusivo." },
+            { title: "Marina Villas (Manzana 8)", desc: "MV8-00 hasta MV8-28 frente a la dársena." },
+            { title: "Marina Villas (Manzana 9)", desc: "MV09-08 hasta MV09-34." }
+        ]
+    },
+    'sec-3': {
+        name: "Sector 3 — Marina, Mozza & Casa Blake", subtitle: "Centro Urbano, Gastronomía y Club Náutico",
+        badge: "SECTOR 3 (AMARILLO)", badgeClass: "bg-yellow-500 text-slate-950",
+        accesos: [
+            { num: 7, desc: "Acceso 7: Punto de Control Casa Blake & Centro Comercial." },
+            { num: 8, desc: "Acceso 8: Ingreso a Restaurante Mozza / Docks Turísticos." }
+        ],
+        infrastructure: [
+            { title: "Restaurante Mozza (Outlet)", desc: "Área gastronómica italiana y espejos de agua." },
+            { title: "Vivero", desc: "Zona de producción y resguardo botánico." },
+            { title: "Casa Blake", desc: "Condominios y Boutique de estilo de vida." },
+            { title: "Muelles A, B, C y Muelle Mozza", desc: "Infraestructura para embarcaciones turísticas y privadas." }
+        ]
+    },
+    'sec-4': {
+        name: "Sector 4 — Four Seasons Resort & Residences", subtitle: "Zona Hotelera, Golf y Residencias de Lujo",
+        badge: "SECTOR 4 (NARANJA)", badgeClass: "bg-orange-500 text-slate-950",
+        accesos: [{ num: 9, desc: "Acceso 9: Acceso Principal al Lobby y Vialidad Copa de Oro." }],
+        infrastructure: [
+            { title: "Jimmy's & Bouchies (Outlets)", desc: "Cafetería y puntos gastronómicos exclusivos." },
+            { title: "The Beach House Pavilion (Outlet)", desc: "Centro de playa y amenidades principales." },
+            { title: "Lobby FS, Limón & Casa de Braza", desc: "Zona hotelera central y restaurantes insignia." },
+            { title: "Milos", desc: "Experiencia culinaria de alta gama." },
+            { title: "Ocean View & Estuary Villas", desc: "Manzanas residenciales panorámicas." }
+        ]
+    },
+    'sec-aman': {
+        name: "Sector Amán — Amanvari Resort & Residences", subtitle: "Zona Hotelera y Desarrollo Amanvari",
+        badge: "ZONA AMÁN (PÚRPURA)", badgeClass: "bg-purple-500 text-white",
+        accesos: [
+            { num: 10, desc: "Acceso 10: Ingreso a Obras y Módulo de Control Amanvari." },
+            { num: 11, desc: "Acceso 11: Acceso Poniente de Servicios Aman." }
+        ],
+        infrastructure: [
+            { title: "Luma & Arva", desc: "Restaurantes insignia de alta cocina en Amanvari." },
+            { title: "Sesui / Sensui & The Lounge", desc: "Espacios de alta coctelería y gastronomía asiática." },
+            { title: "Amanvari Resort & Pavilion", desc: "Desarrollo turístico de ultra-lujo." },
+            { title: "Puente Amán - Beach Club", desc: "Conexión vial principal." }
+        ]
+    }
+};
+
+const AccessDirectory = {
+    1: { sector: 'sec-1', name: "Acceso 1" }, 2: { sector: 'sec-1', name: "Acceso 2" },
+    3: { sector: 'sec-1', name: "Acceso 3" }, 4: { sector: 'sec-1', name: "Acceso 4" },
+    5: { sector: 'sec-2', name: "Acceso 5" }, 6: { sector: 'sec-2', name: "Acceso 6" },
+    7: { sector: 'sec-3', name: "Acceso 7" }, 8: { sector: 'sec-3', name: "Acceso 8" },
+    9: { sector: 'sec-4', name: "Acceso 9" }, 10: { sector: 'sec-aman', name: "Acceso 10" },
+    11: { sector: 'sec-aman', name: "Acceso 11" }
+};
+
+let currentActiveSec = null;
+let activeSectorTab = 'general';
+
+function selectSector(secId) {
+    currentActiveSec = secId;
+    const data = CostaPalmasData[secId];
+    if (!data) return;
+    document.querySelectorAll('.sector-polygon').forEach(p => p.classList.remove('active'));
+    const poly = document.getElementById(`poly-${secId}`);
+    if (poly) poly.classList.add('active');
+
+    document.getElementById('sheetBadge').textContent = data.badge;
+    document.getElementById('sheetBadge').className = `text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-block ${data.badgeClass}`;
+    document.getElementById('sheetTitle').textContent = data.name;
+    document.getElementById('sheetSubtitle').textContent = data.subtitle;
+    switchSectorTab('general');
+    openBottomSheet();
+}
+
+function selectAccess(num) {
+    const acc = AccessDirectory[num];
+    if (!acc) return;
+    selectSector(acc.sector);
+    showToast(`Seleccionado ${acc.name}`);
+}
+
+function switchSectorTab(tabName) {
+    activeSectorTab = tabName;
+    ['general', 'infrastructure', 'access'].forEach(t => {
+        const btn = document.getElementById(`tabBtn-${t}`);
+        if (btn) {
+            btn.className = (t === tabName) ? 
+                "tab-btn py-2 px-2 font-bold text-blue-400 bg-slate-800 rounded-xl text-center shadow transition" : 
+                "tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition";
+        }
+    });
+    renderSectorTabContent();
+}
+
+function renderSectorTabContent() {
+    if (!currentActiveSec) return;
+    const data = CostaPalmasData[currentActiveSec];
+    const container = document.getElementById('sheetBodyContent');
+
+    if (activeSectorTab === 'general') {
+        container.innerHTML = `
+            <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800"><h4 class="font-bold text-blue-400 text-xs mb-1">Información General</h4><p class="text-slate-300 text-xs leading-relaxed">${data.subtitle}</p></div>
+            <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800"><h4 class="font-bold text-blue-400 text-xs mb-1">Accesos Asignados</h4><p class="text-slate-300 text-xs">Este sector cuenta con ${data.accesos.length} puntos de control registrados.</p></div>
+        `;
+    } else if (activeSectorTab === 'infrastructure') {
+        container.innerHTML = data.infrastructure.map(item => `
+            <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800"><h5 class="font-bold text-blue-400 text-xs">${item.title}</h5><p class="text-slate-300 text-[11px] mt-0.5">${item.desc}</p></div>
+        `).join('');
+    } else if (activeSectorTab === 'access') {
+        container.innerHTML = data.accesos.map(acc => `
+            <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-xs shrink-0 border border-blue-500/30"><i class="fa-solid fa-shield-halved text-[10px]"></i></div>
+                <p class="text-slate-300 text-[11px]">${acc.desc}</p>
+            </div>
+        `).join('');
+    }
+}
+
+function openBottomSheet() { document.getElementById('bottomSheet').classList.add('open'); }
+function closeBottomSheet() {
+    document.getElementById('bottomSheet').classList.remove('open');
+    document.querySelectorAll('.sector-polygon').forEach(p => p.classList.remove('active'));
+    currentActiveSec = null;
+}
+
+function openEmergencyModal() { document.getElementById('emergencyModal').classList.remove('hidden'); }
+function closeEmergencyModal() { document.getElementById('emergencyModal').classList.add('hidden'); }
+function openRadiosModal() { document.getElementById('radiosModal').classList.remove('hidden'); }
+function closeRadiosModal() { document.getElementById('radiosModal').classList.add('hidden'); }
+
+function openLightbox(imgSrc) {
+    const lb = document.getElementById('lightboxModal');
+    const img = document.getElementById('lightboxImg');
+    img.src = imgSrc;
+    lb.classList.remove('hidden');
+    lb.classList.add('flex');
+}
+
+function closeLightbox() {
+    const lb = document.getElementById('lightboxModal');
+    lb.classList.remove('flex');
+    lb.classList.add('hidden');
+}
+
+function copySectorInfo() {
+    if (!currentActiveSec) return;
+    const data = CostaPalmasData[currentActiveSec];
+    let text = `${data.name}\n${data.subtitle}\n\nInfraestructura:\n`;
+    data.infrastructure.forEach(i => text += `- ${i.title}: ${i.desc}\n`);
+    navigator.clipboard.writeText(text).then(() => showToast("Información copiada al portapapeles"));
+}
+
+function openModal(member) {
+    const modal = document.getElementById('detailModal');
+    if(!modal) return;
+    document.getElementById('modalImg').src = member.photo;
+    document.getElementById('modalName').innerText = member.name;
+    document.getElementById('modalVilla').innerText = "Villa: " + member.villa + " | Origen: " + member.origin;
+    document.getElementById('modalOpera').innerText = member.opera;
+    document.getElementById('modalZone').innerText = member.zone;
+    document.getElementById('modalTransport').innerText = member.transport;
+    document.getElementById('modalBellman').innerText = member.bellman;
+    document.getElementById('modalPhone').innerText = member.phone;
+    
+    document.getElementById('goToMapBtn').onclick = () => focusOnMember(member.id);
+    document.getElementById('goToGpsBtn').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${member.lat},${member.lng}`, '_blank');
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    const modal = document.getElementById('detailModal');
+    if(modal) modal.classList.add('hidden');
+}
+
+function copyResidentDetails() {
+    const reportText = `[COSTA PALMAS — OPERACIÓN]\nResidente: ${document.getElementById('modalName').innerText}\n${document.getElementById('modalVilla').innerText} | Folio Opera: ${document.getElementById('modalOpera').innerText}\nTransporte: ${document.getElementById('modalTransport').innerText}\nNotas Bellman: ${document.getElementById('modalBellman').innerText}\nTel: ${document.getElementById('modalPhone').innerText}`;
+    navigator.clipboard.writeText(reportText).then(() => showToast("¡Datos copiados para WhatsApp!"));
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    toast.classList.remove('-translate-y-20', 'opacity-0');
+    setTimeout(() => toast.classList.add('-translate-y-20', 'opacity-0'), 2500);
+}
   </script>
 </body>
 </html>
