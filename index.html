@@ -250,7 +250,7 @@
                 </div>
             </div>
 
-            <!-- VISTA 2: NUEVO MÓDULO DE TRANSPORTACIÓN (PDFs) -->
+            <!-- VISTA 2: NUEVO MÓDULO DE TRANSPORTACIÓN (PDFs Actualizado) -->
             <div id="view-transport" class="hidden flex flex-col w-full p-4 space-y-6 pb-28">
                 <!-- Zona de Carga PDF -->
                 <section class="bg-[#1c2541] rounded-2xl p-5 border border-slate-800 shadow-xl space-y-3">
@@ -1066,7 +1066,7 @@
             });
         }
 
-        // --- MÓDULO DE TRANSPORTACIÓN (PDFs) ---
+        // --- MÓDULO DE TRANSPORTACIÓN (PDFs Actualizado con Filtro de Cancelados y FBO) ---
         document.getElementById('pdfInput').addEventListener('change', (e) => {
             const btn = document.getElementById('processBtn');
             if (e.target.files.length > 0) {
@@ -1107,7 +1107,9 @@
                 for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                     const page = await pdfDoc.getPage(pageNum);
                     const textContent = await page.getTextContent();
-                    fullText += "\n" + textContent.items.map(item => item.str).join(" ");
+                    const pageStrings = textContent.items.map(item => item.str);
+                    fullText += "\n" + pageStrings.join(" ");
+
                     const percent = Math.round((pageNum / totalPages) * 100);
                     progressBar.style.width = percent + "%";
                     statusPercent.innerText = percent + "%";
@@ -1119,6 +1121,7 @@
                 statusText.innerText = "¡Procesamiento completo!";
                 setTimeout(() => statusContainer.classList.add('hidden'), 2000);
             } catch (error) {
+                console.error("Error al procesar PDF:", error);
                 alert("Ocurrió un error al leer el documento.");
                 statusContainer.classList.add('hidden');
             }
@@ -1126,30 +1129,47 @@
 
         function parseReservationsReport(text) {
             const items = [];
-            const blocks = text.split(/(?=SJD Airport\s*-\s*(?:Departure|Arrival)|SJD Airport\s*Arrival)/gi);
+            const blocks = text.split(/(?=(?:SJD Airport|FBO Private Airport)\s*[-–]\s*(?:Departure|Arrival)|(?:SJD Airport|FBO Private Airport)\s*Arrival)/gi);
 
             blocks.forEach(block => {
                 if (!block.trim()) return;
-                const isArrival = /Arrival/i.test(block.substring(0, 30));
-                const isDeparture = /Departure/i.test(block.substring(0, 30));
+
+                const headerSnippet = block.substring(0, 40);
+                const isArrival = /Arrival/i.test(headerSnippet);
+                const isDeparture = /Departure/i.test(headerSnippet);
+
                 if (!isArrival && !isDeparture) return;
+
+                // FILTRO INTELIGENTE: Omitir registros cancelados
+                if (/Canceled|Cancelled/i.test(block)) {
+                    return;
+                }
 
                 let name = "";
                 const nameMatch = block.match(/Name:\s*([A-Za-z\s&]+?)(?=\s+Number of Guest|$)/i) ||
                                   block.match(/Player\s*1:\s*[A-Z0-9\-]+\s*[-–]\s*(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Za-z\s&]+)/i);
-                if (nameMatch && nameMatch[1]) name = nameMatch[1].trim().replace(/\s+/g, ' ');
+                
+                if (nameMatch && nameMatch[1]) {
+                    name = nameMatch[1].trim().replace(/\s+/g, ' ');
+                }
                 if (!name || name.length < 3) return;
 
                 let pax = "1";
                 const paxMatch = block.match(/Number of Guest:\s*(\d{1,2})/i);
-                if (paxMatch) pax = paxMatch[1].trim();
+                if (paxMatch) {
+                    pax = paxMatch[1].trim();
+                }
 
                 let time = "TBC";
                 let minutesValue = 9999;
+
                 if (isArrival) {
                     const dropTimeMatch = block.match(/Drop-off time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
-                    if (dropTimeMatch && dropTimeMatch[1]) {
-                        time = dropTimeMatch[1].trim();
+                    const pickTimeArrival = block.match(/Pick-up time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
+                    const timeToUse = dropTimeMatch ? dropTimeMatch[1] : (pickTimeArrival ? pickTimeArrival[1] : null);
+                    
+                    if (timeToUse) {
+                        time = timeToUse.trim();
                         minutesValue = convertTimeToMinutes(time);
                     }
                 } else {
@@ -1162,17 +1182,27 @@
 
                 let pickUpPoint = "";
                 let dropOffPoint = "";
+
                 const pickMatch = block.match(/Pick-up point:\s*([^\n]+?)(?=\s+(?:Drop-off point:|Drop-off time|Transportation|Reservation|Flight|$))/i);
-                if (pickMatch && pickMatch[1]) pickUpPoint = pickMatch[1].trim().replace(/\s+/g, ' ');
+                if (pickMatch && pickMatch[1]) {
+                    pickUpPoint = pickMatch[1].trim().replace(/\s+/g, ' ');
+                }
 
                 const dropMatch = block.match(/Drop-off point:\s*([^\n]+?)(?=\s+(?:Drop-off time|Pick-up time|Transportation|Reservation|Flight|$))/i);
-                if (dropMatch && dropMatch[1]) dropOffPoint = dropMatch[1].trim().replace(/\s+/g, ' ');
+                if (dropMatch && dropMatch[1]) {
+                    dropOffPoint = dropMatch[1].trim().replace(/\s+/g, ' ');
+                }
 
                 if (/Four Seasons|FS Lobby/i.test(pickUpPoint)) pickUpPoint = "Four Seasons Lobby";
                 if (/Four Seasons|FS Lobby/i.test(dropOffPoint)) dropOffPoint = "Four Seasons Lobby";
 
-                if (!pickUpPoint) pickUpPoint = isArrival ? "SJD International Airport T2" : "Four Seasons Lobby";
-                if (!dropOffPoint) dropOffPoint = isArrival ? "Four Seasons Lobby" : "SJD International Airport T2";
+                if (!pickUpPoint) pickUpPoint = isArrival ? "SJD International Airport" : "Four Seasons Lobby";
+                if (!dropOffPoint) dropOffPoint = isArrival ? "Four Seasons Lobby" : "SJD International Airport";
+
+                if (/FBO Private Airport/i.test(headerSnippet)) {
+                    if (isArrival) pickUpPoint = "FBO Private Airport CSL";
+                    else dropOffPoint = "FBO Private Airport CSL";
+                }
 
                 let vehicleShort = "Suburban";
                 if (/SPRINTER/i.test(block) || /Sprinter/i.test(block)) vehicleShort = "Sprinter";
@@ -1186,12 +1216,18 @@
 
                 const item = {
                     type: isArrival ? 'ARRIVAL' : 'DEPARTURE',
-                    name: name, pax: pax, time: time, minutes: minutesValue,
-                    origin: pickUpPoint, destination: dropOffPoint,
-                    transportation: transportation, vehicle: vehicleShort
+                    name: name,
+                    pax: pax,
+                    time: time,
+                    minutes: minutesValue,
+                    origin: pickUpPoint,
+                    destination: dropOffPoint,
+                    transportation: transportation,
+                    vehicle: vehicleShort
                 };
 
-                if (!items.some(existing => existing.name === item.name && existing.time === item.time)) {
+                const exists = items.some(existing => existing.name === item.name && existing.time === item.time);
+                if (!exists) {
                     items.push(item);
                 }
             });
@@ -1206,8 +1242,10 @@
             let hours = parseInt(match[1], 10);
             const minutes = parseInt(match[2], 10);
             const modifier = match[3].toUpperCase();
+
             if (modifier === 'PM' && hours < 12) hours += 12;
             if (modifier === 'AM' && hours === 12) hours = 0;
+
             return hours * 60 + minutes;
         }
 
@@ -1218,15 +1256,16 @@
             document.getElementById('statDepartures').innerText = items.filter(i => i.type === 'DEPARTURE').length;
 
             container.innerHTML = items.length === 0 ? 
-                '<p class="text-slate-500 text-xs italic text-center py-12">No se encontraron movimientos registrados.</p>' : '';
+                '<p class="text-slate-500 text-xs italic text-center py-12">No se encontraron movimientos activos registrados.</p>' : '';
 
             items.forEach((item, idx) => { container.appendChild(createExecutiveCard(item, idx)); });
         }
 
         function generateWhatsAppBlock(item) {
             const isArr = item.type === 'ARRIVAL';
+            const timeKey = isArr ? 'ETA' : 'ETD';
             return `*${item.name}* leaving *${item.origin}* on way to *${item.destination}*
-> *${isArr ? 'ETA' : 'ETD'}:* ${item.time}
+> *${timeKey}:* ${item.time}
 > *Transportation / Driver:* ${item.transportation}
 > *Pax:* ${item.pax}`;
         }
@@ -1234,7 +1273,9 @@
         function createExecutiveCard(item, idx) {
             const div = document.createElement('div');
             const isArrival = item.type === 'ARRIVAL';
+            const timeKey = isArrival ? 'ETA' : 'ETD';
             const fullWhatsAppText = generateWhatsAppBlock(item);
+
             div.className = `executive-card relative overflow-hidden bg-[#1c2541] border border-slate-800 border-l-4 ${isArrival ? 'border-l-emerald-500' : 'border-l-sky-400'} rounded-2xl p-4 flex flex-col gap-3 shadow-lg transition-all duration-300`;
             const badgeColor = isArrival ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20';
             const vehicleBadge = item.vehicle === 'Sprinter' ? '🚐 Sprinter' : (item.vehicle === 'Suburban' ? '🚙 Suburban' : '🚗 Own');
@@ -1249,7 +1290,7 @@
                     <span class="text-[9px] px-2 py-0.5 rounded border border-slate-800 bg-[#0b132b] text-slate-300 font-mono font-semibold whitespace-nowrap">${vehicleBadge}</span>
                   </div>
                   <div class="flex items-center gap-1.5 whitespace-nowrap">
-                    <span class="text-[11px] font-mono text-slate-200 font-semibold bg-[#0b132b] px-2 py-0.5 rounded border border-slate-800">${isArrival ? 'ETA' : 'ETD'}: ${item.time}</span>
+                    <span class="text-[11px] font-mono text-slate-200 font-semibold bg-[#0b132b] px-2 py-0.5 rounded border border-slate-800">${timeKey}: ${item.time}</span>
                     <span class="text-[10px] font-mono text-slate-300 bg-[#0b132b] px-2 py-0.5 rounded border border-slate-800">👤 ${item.pax} Pax</span>
                   </div>
                 </div>
