@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JSFiddle 6L4u8npx</title>
+  <title>JSFiddle pn7yuzda</title>
 
   <style>
     
@@ -23,12 +23,15 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -43,15 +46,6 @@
             overflow: hidden;
             -webkit-text-size-adjust: 100%;
             -webkit-font-smoothing: antialiased;
-        }
-
-        #view-map-leaflet {
-            position: absolute !important;
-            inset: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 20;
-            background: #020617;
         }
 
         #leaflet-map {
@@ -102,6 +96,35 @@
             transform: translateY(0);
         }
 
+        /* Animación de entrada suave para tarjetas */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #residentList > div {
+            animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .bg-slate-900 {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        #residentList > div:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 4px 20px -2px rgba(59, 130, 246, 0.25);
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+
+        @keyframes softPulse {
+            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(225, 29, 72, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+        }
+        button.bg-rose-600 { animation: softPulse 2.5s infinite; }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -116,7 +139,6 @@
                     <h2 class="text-2xl font-bold text-white">Costa Palmas</h2>
                     <p class="text-xs text-slate-400 mt-1">Acceso Autorizado — Bellman & Transport</p>
                 </div>
-
                 <div class="space-y-3">
                     <div>
                         <label class="block text-[10px] font-semibold text-slate-300 mb-1">USUARIO</label>
@@ -126,13 +148,11 @@
                         <label class="block text-[10px] font-semibold text-slate-300 mb-1">CONTRASEÑA</label>
                         <input type="password" id="auth-pass" class="w-full px-3 py-2 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-white bg-slate-800" placeholder="••••••••">
                     </div>
-
                     <button onclick="handleAuth()" id="auth-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md text-xs">
                         Iniciar Sesión
                     </button>
                 </div>
             </div>
-
             <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-400">
                 <span>Verificación en la Nube (Excel)</span>
                 <span class="text-slate-500 font-medium">Costa Palmas Security</span>
@@ -147,7 +167,6 @@
                 <h3 class="font-bold text-lg">Perfil de Operador</h3>
                 <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-white font-bold text-xl">&times;</button>
             </div>
-
             <div class="flex-1 space-y-3 py-1">
                 <p class="text-xs text-slate-400">Datos de la sesión activa:</p>
                 <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2 text-xs">
@@ -162,7 +181,6 @@
                     <button onclick="saveProfileData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">Guardar Cambios</button>
                 </div>
             </div>
-
             <div class="pt-3 border-t border-slate-800 flex justify-between items-center">
                 <button onclick="clearActiveSession()" class="text-xs bg-red-900/30 text-red-400 px-3 py-2 rounded-xl font-semibold hover:bg-red-900/50 transition flex items-center gap-1">
                     <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
@@ -177,22 +195,21 @@
     <!-- CONTENEDOR PRINCIPAL -->
     <div id="appContainer" class="flex flex-col h-full w-full bg-slate-950 text-slate-100 relative overflow-hidden">
         
-        <!-- ENCABEZADO -->
+        <!-- ENCABEZADO UNIFICADO CON LOGOTIPO DINÁMICO (Celda A2) -->
         <header id="appHeader" class="bg-slate-900 text-white p-3.5 shadow-md shrink-0 z-30 border-b border-slate-800">
             <div class="flex justify-between items-center max-w-4xl mx-auto w-full">
-                <div class="flex items-center gap-2.5">
-                    <div class="bg-amber-500/20 text-amber-400 p-2 rounded-xl border border-amber-500/30">
-                        <i class="fa-solid fa-map-location-dot text-base"></i>
+                <div class="flex items-center gap-3">
+                    <div id="companyLogoContainer" class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/10 font-bold text-slate-950 text-lg tracking-wider font-serif overflow-hidden shrink-0">
+                        CP
                     </div>
                     <div>
-                        <h1 class="font-bold text-sm text-white">Costa Palmas</h1>
+                        <h1 class="text-base sm:text-lg font-bold tracking-widest text-amber-400 uppercase font-serif">Costa Palmas</h1>
                         <div class="flex items-center gap-2 mt-0.5">
                             <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                             <p id="syncStatus" class="text-[10px] text-slate-400">Sincronizando...</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="flex items-center gap-2">
                     <button onclick="toggleAdminPanel()" id="userBadgeBtn" class="w-9 h-9 rounded-full bg-blue-800 hover:bg-blue-700 flex items-center justify-center font-bold border border-blue-600 text-xs transition-colors text-white shadow-sm" title="Panel de Operador">
                         CP
@@ -201,25 +218,30 @@
             </div>
         </header>
 
-        <!-- CONTENIDO PRINCIPAL -->
+        <!-- CONTENIDO PRINCIPAL (3 VISTAS) -->
         <main class="flex-1 overflow-y-auto relative flex flex-col no-scrollbar w-full max-w-4xl mx-auto">
             
             <!-- VISTA 1: DIRECTORIO DE RESIDENTES -->
             <div id="view-directory" class="flex flex-col w-full pb-24">
                 <div class="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-md px-4 pt-3 pb-3 space-y-2.5 border-b border-slate-900 shadow-lg">
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <div class="relative flex items-center">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="searchInput" placeholder="Buscar por nombre, villa, zona o Folio Opera..." 
-                            class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm text-white placeholder-slate-500"
+                        <input type="text" id="searchInput" placeholder="Buscar por nombre, villa, zona o Folio Opera (ej. r216)..." 
+                            class="w-full pl-10 pr-9 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm text-white placeholder-slate-500"
                             oninput="filterDirectory()">
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-3 text-slate-500 hover:text-slate-300 hidden p-1 transition-colors" title="Borrar búsqueda">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
                     </div>
 
                     <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs">
                         <button onclick="filterByZone('all')" id="btn-zone-all" class="px-3 py-1.5 rounded-full font-medium bg-blue-600 text-white shrink-0 shadow-sm transition-colors">Todas</button>
-                        <button onclick="filterByZone('Beach & Yacht Club')" id="btn-zone-beach" class="px-3 py-1.5 rounded-full font-medium bg-slate-900 text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-colors">Beach & Yacht Club</button>
-                        <button onclick="filterByZone('Residencial')" id="btn-zone-residential" class="px-3 py-1.5 rounded-full font-medium bg-slate-900 text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-colors">Residencial</button>
+                        <button onclick="filterByZone('Beach & Yacht Club')" id="btn-zone-beach" class="px-3 py-1.5 rounded-full font-medium bg-slate-900 text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-colors">Beach & Yacht</button>
+                        <button onclick="filterByZone('Residential')" id="btn-zone-residential" class="px-3 py-1.5 rounded-full font-medium bg-slate-900 text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-colors">Residencial</button>
+                        <button onclick="filterByZone('Outlet')" id="btn-zone-outlet" class="px-3 py-1.5 rounded-full font-medium bg-slate-900 text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-colors">Outlets</button>
+                        <button onclick="filterByZone('Arrival')" id="btn-zone-arrival" class="px-3 py-1.5 rounded-full font-medium bg-slate-900 text-slate-300 border border-slate-800 shrink-0 shadow-sm transition-colors">Arrivals</button>
                     </div>
                 </div>
 
@@ -228,9 +250,57 @@
                 </div>
             </div>
 
-            <!-- VISTA 2: MAPA GPS LEAFLET -->
-            <div id="view-map-leaflet" class="hidden absolute top-0 left-0 w-full h-full z-20 bg-slate-950">
-                <div id="leaflet-map" class="w-full h-full"></div>
+            <!-- VISTA 2: NUEVO MÓDULO DE TRANSPORTACIÓN (PDFs) -->
+            <div id="view-transport" class="hidden flex flex-col w-full p-4 space-y-6 pb-28">
+                <!-- Zona de Carga PDF -->
+                <section class="bg-[#1c2541] rounded-2xl p-5 border border-slate-800 shadow-xl space-y-3">
+                    <label class="block text-xs font-semibold tracking-wider text-slate-300 uppercase">Cargar Reporte de Reservaciones (PDF):</label>
+                    <div class="flex flex-col sm:flex-row gap-3 items-center">
+                        <input type="file" id="pdfInput" accept=".pdf" class="block w-full text-xs text-slate-400
+                          file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0
+                          file:text-xs file:font-semibold file:bg-blue-600 file:text-white
+                          hover:file:bg-blue-500 file:cursor-pointer cursor-pointer bg-[#0b132b] rounded-xl border border-slate-800 p-1" />
+                        <button id="processBtn" onclick="processPDF()" disabled class="w-full sm:w-auto px-5 py-2.5 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl transition-all cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider whitespace-nowrap">
+                          <span>Procesar Archivo</span>
+                        </button>
+                        <button onclick="resetAppPDF()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition font-medium border border-slate-700 whitespace-nowrap">
+                          🔄 Reiniciar
+                        </button>
+                    </div>
+                    <!-- Status Bar -->
+                    <div id="statusContainer" class="mt-2 hidden">
+                        <div class="flex justify-between text-xs text-slate-400 mb-1 font-mono">
+                          <span id="statusText">Analizando documento...</span>
+                          <span id="statusPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-[#0b132b] rounded-full h-2 border border-slate-800 overflow-hidden">
+                          <div id="progressBar" class="bg-blue-500 h-2 rounded-full w-0 transition-all duration-200"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Panel de KPIs de Transportación -->
+                <div class="flex items-center gap-2 bg-[#1c2541] px-3.5 py-3 rounded-2xl border border-slate-800 shadow-inner justify-around">
+                    <div class="text-center px-3 border-r border-slate-700/50 flex-1">
+                      <span id="statTotal" class="block text-base font-bold text-slate-200 font-mono">0</span>
+                      <span class="text-[9px] uppercase tracking-wider text-slate-400">Total</span>
+                    </div>
+                    <div class="text-center px-3 border-r border-slate-700/50 flex-1">
+                      <span id="statArrivals" class="block text-base font-bold text-emerald-400 font-mono">0</span>
+                      <span class="text-[9px] uppercase tracking-wider text-slate-400">Arrivals</span>
+                    </div>
+                    <div class="text-center px-3 flex-1">
+                      <span id="statDepartures" class="block text-base font-bold text-sky-400 font-mono">0</span>
+                      <span class="text-[9px] uppercase tracking-wider text-slate-400">Departures</span>
+                    </div>
+                </div>
+
+                <!-- Tarjetas Ejecutivas de Transportación -->
+                <section id="viewMain" class="space-y-3">
+                  <div id="mainOutput" class="space-y-3">
+                    <p class="text-slate-500 text-xs italic text-center py-12">Cargue el archivo PDF para desplegar la agenda ejecutiva de transportación.</p>
+                  </div>
+                </section>
             </div>
 
             <!-- VISTA 3: MAPA OPERATIVO SVG Y SECTORES -->
@@ -296,15 +366,15 @@
             </div>
         </div>
 
-        <!-- NAVEGACIÓN INFERIOR FIJA -->
+        <!-- NAVEGACIÓN INFERIOR SIMPLIFICADA (3 PESTAÑAS) -->
         <nav id="appNav" class="bg-slate-900 border-t border-slate-800 h-16 flex justify-around items-center px-2 shrink-0 z-30 w-full">
             <button onclick="switchTab('directory')" id="nav-dir" class="flex flex-col items-center text-blue-500 transition-colors">
                 <i class="fa-solid fa-address-book text-base"></i>
                 <span class="text-[9px] font-medium mt-1">Directorio</span>
             </button>
-            <button onclick="switchTab('map')" id="nav-map" class="flex flex-col items-center text-slate-400 hover:text-slate-200 transition-colors">
-                <i class="fa-solid fa-map-location-dot text-base"></i>
-                <span class="text-[9px] font-medium mt-1">Mapa GPS</span>
+            <button onclick="switchTab('transport')" id="nav-trans" class="flex flex-col items-center text-slate-400 hover:text-slate-200 transition-colors">
+                <i class="fa-solid fa-van-shuttle text-base"></i>
+                <span class="text-[9px] font-medium mt-1">Transportación</span>
             </button>
             <button onclick="switchTab('svg')" id="nav-svg" class="flex flex-col items-center text-slate-400 hover:text-slate-200 transition-colors">
                 <i class="fa-solid fa-map text-base"></i>
@@ -314,9 +384,24 @@
 
     </div>
 
+    <!-- MODAL MAPA GPS FLOTANTE CON BOTÓN GRANDE Y VISIBLE DE "Regresar al Directorio" -->
+    <div id="mapModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex-col">
+        <div class="bg-slate-900/95 p-3.5 flex justify-between items-center border-b border-slate-800 shrink-0 shadow-lg">
+            <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-blue-400"></i> Ubicación GPS en Costa Palmas
+            </h3>
+            <button onclick="closeMapModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Regresar al Directorio
+            </button>
+        </div>
+        <div class="flex-1 relative w-full h-full">
+            <div id="leaflet-map" class="w-full h-full"></div>
+        </div>
+    </div>
+
     <!-- MODAL DE DETALLE DE RESIDENTE -->
     <div id="detailModal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-end justify-center">
-        <div id="modalContentBox" class="bg-slate-900 text-white w-full max-w-lg rounded-t-3xl p-4 sm:p-5 flex flex-col gap-3 animate-slide-up max-h-[85vh] overflow-y-auto border-t border-slate-800 shadow-2xl">
+        <div id="modalContentBox" class="bg-slate-900 text-white w-full max-w-lg rounded-t-3xl p-4 sm:p-5 flex flex-col gap-3 max-h-[85vh] overflow-y-auto no-scrollbar border-t border-slate-800 shadow-2xl">
             <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto"></div>
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-2.5">
@@ -326,9 +411,7 @@
                         <p id="modalVilla" class="text-[11px] font-semibold text-blue-400 bg-blue-900/40 px-2 py-0.5 rounded-full inline-block mt-1"></p>
                     </div>
                 </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1.5">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
             <div class="border-t border-slate-800 pt-2.5 flex flex-col gap-2 text-xs">
@@ -377,11 +460,9 @@
                 <button id="goToMapBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold text-xs shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
                     <i class="fa-solid fa-map-pin"></i> Ver ubicación en el Mapa GPS
                 </button>
-
                 <button id="goToGpsBtn" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-bold text-xs shadow-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
                     <i class="fa-solid fa-diamond-turn-right"></i> Iniciar Ruta en Google Maps
                 </button>
-
                 <button id="copyBtn" onclick="copyResidentDetails()" class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-bold text-xs shadow-md hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
                     <i class="fa-solid fa-copy"></i> Copiar Datos para WhatsApp
                 </button>
@@ -396,12 +477,9 @@
                 <h3 class="font-bold text-rose-400 text-sm flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Directorio de Emergencia
                 </h3>
-                <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <p class="text-[11px] text-slate-300">Toca cualquier número para iniciar una llamada automática:</p>
-            
             <div class="space-y-2 text-xs">
                 <a href="tel:6241109088" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-rose-500 transition">
                     <div><div class="font-bold text-white">Paramédicos CP</div><div class="text-[11px] text-slate-400 font-mono">624 110 9088</div></div>
@@ -424,36 +502,33 @@
                     <i class="fa-solid fa-phone text-emerald-400 text-base"></i>
                 </a>
             </div>
-
             <button onclick="closeEmergencyModal()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-medium mt-1">Cerrar</button>
         </div>
     </div>
 
     <!-- MODAL DE CANALES DE RADIO -->
     <div id="radiosModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 max-w-sm w-full shadow-2xl flex flex-col gap-3">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-md w-full shadow-2xl flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h3 class="font-bold text-amber-400 text-sm flex items-center gap-2">
                     <i class="fa-solid fa-walkie-talkie"></i> Canales de Radio Oficiales
                 </h3>
-                <button onclick="closeRadiosModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeRadiosModal()" class="text-slate-400 hover:text-white p-1 text-base"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
-            <div class="space-y-1.5 text-xs max-h-[50vh] overflow-y-auto pr-1">
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 1</span><span class="text-slate-300">Seguridad</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 2</span><span class="text-slate-300">Operación Golf</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 3</span><span class="text-slate-300">Mantenimiento Golf</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 4</span><span class="text-slate-300">Mozza</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 5</span><span class="text-slate-300">Beach Club</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 6</span><span class="text-slate-300">Marina / BH / Water Taxi</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 7</span><span class="text-slate-300">Water Taxi</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 8</span><span class="text-slate-300">Delphine</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 9</span><span class="text-slate-300">Aman</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 10</span><span class="text-slate-300">Libre (A&B / BH)</span></div>
-                <div class="flex justify-between p-2 rounded-lg bg-slate-900"><span class="font-bold text-amber-400">Canal 11</span><span class="text-slate-300">911</span></div>
+            <div class="space-y-1.5 text-xs max-h-[65vh] overflow-y-auto no-scrollbar pr-0.5">
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 1</span><span class="text-slate-200 font-medium">Seguridad</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 2</span><span class="text-slate-200 font-medium">Operación Golf</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 3</span><span class="text-slate-200 font-medium">Mantenimiento Golf</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 4</span><span class="text-slate-200 font-medium">Mozza</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 5</span><span class="text-slate-200 font-medium">Beach Club</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 6</span><span class="text-slate-200 font-medium">Marina / BH / Water Taxi</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 7</span><span class="text-slate-200 font-medium">Water Taxi</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 8</span><span class="text-slate-200 font-medium">Delphine</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 9</span><span class="text-slate-200 font-medium">Aman</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 10</span><span class="text-slate-200 font-medium">Libre (A&B / BH)</span></div>
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50"><span class="font-bold text-amber-400">Canal 11</span><span class="text-slate-200 font-medium">911</span></div>
             </div>
-
-            <button onclick="closeRadiosModal()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-medium mt-1">Cerrar</button>
+            <button onclick="closeRadiosModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold mt-1 transition">Cerrar</button>
         </div>
     </div>
 
@@ -462,26 +537,20 @@
         <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeBottomSheet()">
             <div class="w-10 h-1 bg-slate-600 rounded-full"></div>
         </div>
-
         <div class="px-5 py-2 border-b border-slate-700/80 flex items-start justify-between">
             <div>
                 <span id="sheetBadge" class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded text-slate-900 bg-amber-400 mb-1 inline-block">SECTOR</span>
                 <h2 id="sheetTitle" class="text-base font-bold text-white">Título del Sector</h2>
                 <p id="sheetSubtitle" class="text-[11px] text-slate-400">Subtítulo Descriptivo</p>
             </div>
-            <button onclick="closeBottomSheet()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-700 transition">
-                <i class="fa-solid fa-xmark text-base"></i>
-            </button>
+            <button onclick="closeBottomSheet()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-700 transition"><i class="fa-solid fa-xmark text-base"></i></button>
         </div>
-
         <div class="grid grid-cols-3 border-b border-slate-700/60 bg-slate-900/60 p-1.5 text-xs gap-1">
             <button onclick="switchSectorTab('general')" id="tabBtn-general" class="tab-btn py-2 px-2 font-bold text-amber-400 bg-slate-800 rounded-xl text-center shadow transition">General</button>
             <button onclick="switchSectorTab('infrastructure')" id="tabBtn-infrastructure" class="tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition">Bodegas / Villas</button>
             <button onclick="switchSectorTab('access')" id="tabBtn-access" class="tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition">Accesos</button>
         </div>
-
         <div class="flex-1 overflow-y-auto p-4 space-y-2.5 text-xs no-scrollbar max-h-[45vh]" id="sheetBodyContent"></div>
-
         <div class="p-3 bg-slate-900/60 border-t border-slate-700/80 flex gap-2">
             <button onclick="copySectorInfo()" class="w-full py-2 px-3 rounded-xl bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white font-medium text-xs flex items-center justify-center gap-2 transition">
                 <i class="fa-regular fa-copy"></i>
@@ -498,16 +567,26 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- LÓGICA Y MOTOR GENERAL -->
     <script>
         const SHEET_MEMBERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=0&single=true&output=csv";
         const SHEET_COORD_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_OhdIaJSzCgeEsYLDNBEtSRREK0oIa1Au8hX44vUp7At94uczbyWOT7NsIt5pHxs0ciVTDAoIbY9V/pub?gid=796440013&single=true&output=csv";
         const SHEET_ORIGIN_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1281819744";
+        const SHEET_CONFIG_URL  = "https://docs.google.com/spreadsheets/d/1vqHG6PWAUPcY5dSpV29Mk47iQfEnm36QY7k7fobL0wI/export?format=csv&gid=1458002197";
 
         let membersList = [];
         let originDictionary = {};
         let leafletMap = null;
         let mapMarkersMap = {};
         let currentZoneFilter = 'all';
+
+        function normalizeString(str) {
+            if (!str) return '';
+            return str.toString().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[-\s]/g, "");
+        }
 
         const OPERA_MAPPING = {
             "R1-11": "4011", "R1-12": "4012", "R1-21": "4021", "R1-22": "4022", "R1-31": "4031", "R1-32": "4032",
@@ -548,13 +627,24 @@
                 return;
             }
 
-            authBtn.innerText = "Verificando en Excel...";
+            authBtn.innerText = "Verificando acceso...";
             authBtn.disabled = true;
+
+            const localUsers = {
+                "xasharitl": "123456", "francisco": "123456", "esteban": "123456", "fernando": "123456",
+                "ignacio": "123456", "mozza": "123456", "delphine": "123456", "danielc": "123456",
+                "juanc": "123456", "josel": "123456", "ulises": "123456", "diego": "123456", "dorman": "123456"
+            };
+
+            if (localUsers[userInput] && localUsers[userInput] === passInput) {
+                localStorage.setItem('cp_logged_user', userInput);
+                checkSession();
+                return;
+            }
 
             try {
                 const resOrigin = await fetch(SHEET_ORIGIN_URL);
-                if (!resOrigin.ok) throw new Error("Error al conectar con la hoja de accesos.");
-                
+                if (!resOrigin.ok) throw new Error("Error de red");
                 const textOrigin = await resOrigin.text();
                 const lines = textOrigin.split("\n");
                 let authenticated = false;
@@ -562,10 +652,7 @@
                 for (let i = 1; i < lines.length; i++) {
                     if (!lines[i].trim()) continue;
                     const cols = parseCSVLine(lines[i]);
-                    const excelUser = (cols[0] || "").trim().toLowerCase();
-                    const excelPass = (cols[1] || "").trim();
-
-                    if (excelUser === userInput && excelPass === passInput) {
+                    if ((cols[0] || "").trim().toLowerCase() === userInput && (cols[1] || "").trim() === passInput) {
                         authenticated = true;
                         break;
                     }
@@ -576,11 +663,11 @@
                     checkSession();
                 } else {
                     alert('Usuario o contraseña incorrectos.');
+                    authBtn.innerText = "Iniciar Sesión";
+                    authBtn.disabled = false;
                 }
             } catch (error) {
-                console.error("Error al validar el acceso:", error);
-                alert('⚠️ Error de conexión: No se pudo verificar el acceso con la hoja de cálculo. Comprueba tu red.');
-            } finally {
+                alert('⚠️ Usuario o contraseña incorrectos, o error de conexión con la nube.');
                 authBtn.innerText = "Iniciar Sesión";
                 authBtn.disabled = false;
             }
@@ -595,24 +682,41 @@
                 authScreen.style.display = 'flex';
             } else {
                 authScreen.style.display = 'none';
-                if (badgeBtn) {
-                    badgeBtn.innerText = loggedUser.substring(0, 2).toUpperCase();
-                }
+                if (badgeBtn) badgeBtn.innerText = loggedUser.substring(0, 2).toUpperCase();
                 loadSheetData();
+                loadCompanyLogo();
+            }
+        }
+
+        async function loadCompanyLogo() {
+            try {
+                const res = await fetch(SHEET_CONFIG_URL);
+                if (!res.ok) return;
+                const text = await res.text();
+                const lines = text.split("\n");
+                if (lines.length > 1) {
+                    const cols = parseCSVLine(lines[1]);
+                    const logoUrl = (cols[0] || "").trim();
+                    if (logoUrl.startsWith('http')) {
+                        const container = document.getElementById('companyLogoContainer');
+                        if (container) {
+                            container.innerHTML = `<img src="${logoUrl}" alt="Logo CP" class="w-full h-full object-cover">`;
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn("Logo por defecto mantenido (CP)");
             }
         }
 
         function toggleAdminPanel() {
             const modal = document.getElementById('admin-modal');
             const isHidden = modal.classList.contains('hidden');
-            
             if (isHidden) {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                
                 const currentUser = localStorage.getItem('cp_logged_user') || 'operador';
                 document.getElementById('profile-user').value = currentUser;
-
                 const savedProfile = JSON.parse(localStorage.getItem('cp_profile_' + currentUser) || '{}');
                 document.getElementById('profile-name').value = savedProfile.name || (currentUser.toUpperCase() + ' — Bellman & Security');
             } else {
@@ -649,38 +753,25 @@
                 let coordsDictionary = {};
                 try {
                     const resCoords = await fetch(SHEET_COORD_URL);
-                    if (resCoords.ok) {
-                        const textCoords = await resCoords.text();
-                        coordsDictionary = parseCoordsCSV(textCoords);
-                    }
-                } catch(e) {
-                    console.warn("Advertencia al cargar coordenadas.");
-                }
+                    if (resCoords.ok) coordsDictionary = parseCoordsCSV(await resCoords.text());
+                } catch(e) {}
 
                 try {
                     const resOrigin = await fetch(SHEET_ORIGIN_URL);
-                    if (resOrigin.ok) {
-                        const textOrigin = await resOrigin.text();
-                        originDictionary = parseOriginCSV(textOrigin);
-                    }
-                } catch(e) {
-                    console.warn("Advertencia al cargar orígenes.");
-                }
+                    if (resOrigin.ok) originDictionary = parseOriginCSV(await resOrigin.text());
+                } catch(e) {}
 
                 const resMembers = await fetch(SHEET_MEMBERS_URL);
-                if (!resMembers.ok) throw new Error("Error en respuesta de red de miembros");
-
-                const textMembers = await resMembers.text();
-                parseCSV(textMembers, coordsDictionary);
+                if (!resMembers.ok) throw new Error("Error miembros");
+                parseCSV(await resMembers.text(), coordsDictionary);
 
                 const now = new Date();
                 const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 if (syncEl) syncEl.innerText = `Sincronizado (${timeString})`;
                 if (syncDot) syncDot.className = "w-2 h-2 rounded-full bg-green-400";
             } catch (error) {
-                console.error("Error al cargar datos:", error);
                 const listEl = document.getElementById('residentList');
-                if (listEl) listEl.innerHTML = `<div class="col-span-2 text-center py-10 text-red-400 text-sm">⚠️ Error al conectar con las hojas de cálculo. Verifique su conexión.</div>`;
+                if (listEl) listEl.innerHTML = `<div class="col-span-2 text-center py-10 text-red-400 text-sm">⚠️ Error al conectar con las hojas de cálculo.</div>`;
                 if (syncEl) syncEl.innerText = `Error de conexión`;
                 if (syncDot) syncDot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
             }
@@ -692,10 +783,8 @@
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 const cols = parseCSVLine(lines[i]);
-                const rawName = cols[0] || "";
-                const originVal = cols[1] || "";
-                const key = cleanKey(rawName);
-                if (key) originMap[key] = originVal;
+                const key = cleanKey(cols[0] || "");
+                if (key) originMap[key] = cols[1] || "";
             }
             return originMap;
         }
@@ -708,11 +797,8 @@
                 const cols = parseCSVLine(lines[i]);
                 const latVal = parseFloat(cols[1]);
                 const lngVal = parseFloat(cols[2]);
-                const rawName = cols[cols.length - 1] || cols[4] || "";
-                const key = cleanKey(rawName);
-                if (key && !isNaN(latVal) && !isNaN(lngVal)) {
-                    coordsMap[key] = { lat: latVal, lng: lngVal };
-                }
+                const key = cleanKey(cols[cols.length - 1] || cols[4] || "");
+                if (key && !isNaN(latVal) && !isNaN(lngVal)) coordsMap[key] = { lat: latVal, lng: lngVal };
             }
             return coordsMap;
         }
@@ -739,7 +825,6 @@
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 const cols = parseCSVLine(lines[i]);
-
                 if (cols.length >= 2 && cols[1]) {
                     const rawVilla = cols[3] || "";
                     let latVal = parseFloat(cols[5]);
@@ -752,9 +837,6 @@
                     }
 
                     const memberName = cols[1];
-                    const memberKey = cleanKey(memberName);
-                    const userOrigin = originDictionary[memberKey] || "N/D";
-
                     membersList.push({
                         id: cols[0] || i,
                         name: memberName,
@@ -766,7 +848,7 @@
                         transport: cols[7] || "Sin preferencias especiales de transporte.", 
                         bellman: cols[8] || "Sin notas específicas para bellman.",          
                         phone: cols[9] || "N/A",
-                        origin: userOrigin,
+                        origin: originDictionary[cleanKey(memberName)] || "N/D",
                         opera: getOperaId(rawVilla)
                     });
                 }
@@ -779,14 +861,11 @@
             let inQuotes = false;
             let current = '';
             for (let char of line) {
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) {
                     cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
                     current = '';
-                } else {
-                    current += char;
-                }
+                } else current += char;
             }
             cols.push(current.trim().replace(/^"(.*)"$/, '$1'));
             return cols;
@@ -807,9 +886,7 @@
                             <h4 class="text-white font-bold text-sm">Sin resultados</h4>
                             <p class="text-xs text-slate-400 mt-0.5">No se encontró coincidencia por nombre, villa, zona o Folio Opera.</p>
                         </div>
-                        <button onclick="clearSearch()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow">
-                            Limpiar búsqueda
-                        </button>
+                        <button onclick="clearSearch()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow">Limpiar búsqueda</button>
                     </div>
                 `;
                 return;
@@ -837,11 +914,9 @@
         function filterByZone(zone) {
             currentZoneFilter = zone;
             const btnMap = {
-                'all': 'btn-zone-all',
-                'Beach & Yacht Club': 'btn-zone-beach',
-                'Residencial': 'btn-zone-residential'
+                'all': 'btn-zone-all', 'Beach & Yacht Club': 'btn-zone-beach',
+                'Residential': 'btn-zone-residential', 'Outlet': 'btn-zone-outlet', 'Arrival': 'btn-zone-arrival'
             };
-
             Object.keys(btnMap).forEach(z => {
                 const btn = document.getElementById(btnMap[z]);
                 if(btn) {
@@ -854,95 +929,101 @@
         }
 
         function filterDirectory() {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (searchInput && clearBtn) {
+                if (searchInput.value.trim().length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
             applyFilters();
         }
 
         function clearSearch() {
             const input = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
             if (input) {
                 input.value = '';
+                if (clearBtn) clearBtn.classList.add('hidden');
                 applyFilters();
+                input.focus();
             }
         }
 
         function applyFilters() {
             const searchEl = document.getElementById('searchInput');
-            const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+            const query = normalizeString(searchEl ? searchEl.value : '');
             
             const filtered = membersList.filter(m => {
-                const name = (m.name || '').toLowerCase();
-                const villa = (m.villa || '').toLowerCase();
-                const zone = (m.zone || '').toLowerCase();
-                const opera = (m.opera || '').toLowerCase();
+                const name = normalizeString(m.name || '');
+                const villa = normalizeString(m.villa || '');
+                const zone = normalizeString(m.zone || '');
+                const opera = normalizeString(m.opera || '');
 
-                const matchesSearch = name.includes(query) || 
-                                      villa.includes(query) || 
-                                      zone.includes(query) || 
-                                      opera.includes(query);
-                
+                const matchesSearch = !query || name.includes(query) || villa.includes(query) || zone.includes(query) || opera.includes(query);
                 let matchesZone = true;
                 if (currentZoneFilter !== 'all') {
-                    matchesZone = m.zone.trim().toLowerCase() === currentZoneFilter.trim().toLowerCase();
+                    matchesZone = normalizeString(m.zone || '').includes(normalizeString(currentZoneFilter));
                 }
                 return matchesSearch && matchesZone;
             });
             renderDirectory(filtered);
-            if (leafletMap && document.getElementById('view-map-leaflet').classList.contains('hidden') === false) {
-                updateLeafletMarkers(filtered);
-            }
         }
 
         function focusOnMember(memberId) {
             const member = membersList.find(m => m.id == memberId);
             if (!member) return;
-
             closeModal();
-            switchTab('map');
+            openMapModal(member);
+        }
+
+        function openMapModal(member) {
+            const mapModal = document.getElementById('mapModal');
+            mapModal.classList.remove('hidden');
+            mapModal.classList.add('flex');
 
             setTimeout(() => {
-                if (leafletMap) {
+                if (!leafletMap) {
+                    initLeafletMap(member);
+                } else {
                     leafletMap.invalidateSize();
                     leafletMap.setView([member.lat, member.lng], 18);
-                    updateLeafletMarkers([member], true);
+                    updateLeafletMarkers([member]);
                 }
-            }, 250);
+            }, 150);
+        }
+
+        function closeMapModal() {
+            const mapModal = document.getElementById('mapModal');
+            mapModal.classList.remove('flex');
+            mapModal.classList.add('hidden');
         }
 
         function switchTab(tab) {
             const dirView = document.getElementById('view-directory');
-            const mapView = document.getElementById('view-map-leaflet');
+            const transView = document.getElementById('view-transport');
             const svgView = document.getElementById('view-map-svg');
             const sectorBar = document.getElementById('sectorBottomBar');
             
             const navDir = document.getElementById('nav-dir');
-            const navMap = document.getElementById('nav-map');
+            const navTrans = document.getElementById('nav-trans');
             const navSvg = document.getElementById('nav-svg');
 
             if(dirView) dirView.classList.add('hidden');
-            if(mapView) mapView.classList.add('hidden');
+            if(transView) transView.classList.add('hidden');
             if(svgView) svgView.classList.add('hidden');
             if(sectorBar) sectorBar.classList.add('hidden');
 
             const inactiveColor = "flex flex-col items-center text-slate-400 hover:text-slate-200 transition-colors";
             if(navDir) navDir.className = inactiveColor;
-            if(navMap) navMap.className = inactiveColor;
+            if(navTrans) navTrans.className = inactiveColor;
             if(navSvg) navSvg.className = inactiveColor;
 
             if(tab === 'directory') {
                 if(dirView) dirView.classList.remove('hidden');
                 if(navDir) navDir.className = "flex flex-col items-center text-blue-500 transition-colors";
-            } else if(tab === 'map') {
-                if(mapView) mapView.classList.remove('hidden');
-                if(navMap) navMap.className = "flex flex-col items-center text-blue-500 transition-colors";
-                
-                setTimeout(() => {
-                    if(!leafletMap) {
-                        initLeafletMap();
-                    } else {
-                        leafletMap.invalidateSize();
-                        updateLeafletMarkers(membersList);
-                    }
-                }, 100);
+            } else if(tab === 'transport') {
+                if(transView) transView.classList.remove('hidden');
+                if(navTrans) navTrans.className = "flex flex-col items-center text-blue-500 transition-colors";
             } else if(tab === 'svg') {
                 if(svgView) svgView.classList.remove('hidden');
                 if(sectorBar) sectorBar.classList.remove('hidden');
@@ -950,29 +1031,25 @@
             }
         }
 
-        function initLeafletMap() {
+        function initLeafletMap(targetMember) {
             const mapContainer = document.getElementById('leaflet-map');
             if(!mapContainer) return;
 
-            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; OpenStreetMap'
-            });
+            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, minZoom: 14 });
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, minZoom: 14 });
 
-            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19,
-                attribution: 'Esri'
-            });
+            const startLat = targetMember ? targetMember.lat : 23.609724386;
+            const startLng = targetMember ? targetMember.lng : -109.5943928;
 
             leafletMap = L.map('leaflet-map', {
-                center: [23.609724386, -109.5943928],
-                zoom: 16,
+                center: [startLat, startLng],
+                zoom: targetMember ? 18 : 16,
+                minZoom: 14, maxZoom: 19,
                 layers: [satelliteLayer]
             });
 
             L.control.layers({ "Estándar": standardLayer, "Satelital": satelliteLayer }).addTo(leafletMap);
-            updateLeafletMarkers(membersList);
-            
+            updateLeafletMarkers(targetMember ? [targetMember] : membersList);
             setTimeout(() => { leafletMap.invalidateSize(); }, 200);
         }
 
@@ -989,12 +1066,246 @@
             });
         }
 
+        // --- MÓDULO DE TRANSPORTACIÓN (PDFs) ---
+        document.getElementById('pdfInput').addEventListener('change', (e) => {
+            const btn = document.getElementById('processBtn');
+            if (e.target.files.length > 0) {
+                btn.disabled = false;
+                btn.className = "w-full sm:w-auto px-5 py-2.5 bg-blue-600 text-white font-semibold text-xs rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10 uppercase tracking-wider whitespace-nowrap hover:bg-blue-500";
+            }
+        });
+
+        function resetAppPDF() {
+            document.getElementById('pdfInput').value = "";
+            const btn = document.getElementById('processBtn');
+            btn.disabled = true;
+            btn.className = "w-full sm:w-auto px-5 py-2.5 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl transition-all cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider whitespace-nowrap";
+            document.getElementById('mainOutput').innerHTML = '<p class="text-slate-500 text-xs italic text-center py-12">Cargue el archivo PDF para desplegar la agenda ejecutiva de transportación.</p>';
+            document.getElementById('statTotal').innerText = "0";
+            document.getElementById('statArrivals').innerText = "0";
+            document.getElementById('statDepartures').innerText = "0";
+        }
+
+        async function processPDF() {
+            const fileInput = document.getElementById('pdfInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const statusContainer = document.getElementById('statusContainer');
+            const progressBar = document.getElementById('progressBar');
+            const statusText = document.getElementById('statusText');
+            const statusPercent = document.getElementById('statusPercent');
+
+            statusContainer.classList.remove('hidden');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const totalPages = pdfDoc.numPages;
+                let fullText = "";
+
+                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                    const page = await pdfDoc.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    fullText += "\n" + textContent.items.map(item => item.str).join(" ");
+                    const percent = Math.round((pageNum / totalPages) * 100);
+                    progressBar.style.width = percent + "%";
+                    statusPercent.innerText = percent + "%";
+                    statusText.innerText = `Procesando página ${pageNum} de ${totalPages}...`;
+                }
+
+                statusText.innerText = "Organizando cronograma...";
+                parseReservationsReport(fullText);
+                statusText.innerText = "¡Procesamiento completo!";
+                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+            } catch (error) {
+                alert("Ocurrió un error al leer el documento.");
+                statusContainer.classList.add('hidden');
+            }
+        }
+
+        function parseReservationsReport(text) {
+            const items = [];
+            const blocks = text.split(/(?=SJD Airport\s*-\s*(?:Departure|Arrival)|SJD Airport\s*Arrival)/gi);
+
+            blocks.forEach(block => {
+                if (!block.trim()) return;
+                const isArrival = /Arrival/i.test(block.substring(0, 30));
+                const isDeparture = /Departure/i.test(block.substring(0, 30));
+                if (!isArrival && !isDeparture) return;
+
+                let name = "";
+                const nameMatch = block.match(/Name:\s*([A-Za-z\s&]+?)(?=\s+Number of Guest|$)/i) ||
+                                  block.match(/Player\s*1:\s*[A-Z0-9\-]+\s*[-–]\s*(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Za-z\s&]+)/i);
+                if (nameMatch && nameMatch[1]) name = nameMatch[1].trim().replace(/\s+/g, ' ');
+                if (!name || name.length < 3) return;
+
+                let pax = "1";
+                const paxMatch = block.match(/Number of Guest:\s*(\d{1,2})/i);
+                if (paxMatch) pax = paxMatch[1].trim();
+
+                let time = "TBC";
+                let minutesValue = 9999;
+                if (isArrival) {
+                    const dropTimeMatch = block.match(/Drop-off time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
+                    if (dropTimeMatch && dropTimeMatch[1]) {
+                        time = dropTimeMatch[1].trim();
+                        minutesValue = convertTimeToMinutes(time);
+                    }
+                } else {
+                    const pickTimeMatch = block.match(/Pick-up time:\s*([\d\:]+\s*(?:AM|PM)?)/i);
+                    if (pickTimeMatch && pickTimeMatch[1]) {
+                        time = pickTimeMatch[1].trim();
+                        minutesValue = convertTimeToMinutes(time);
+                    }
+                }
+
+                let pickUpPoint = "";
+                let dropOffPoint = "";
+                const pickMatch = block.match(/Pick-up point:\s*([^\n]+?)(?=\s+(?:Drop-off point:|Drop-off time|Transportation|Reservation|Flight|$))/i);
+                if (pickMatch && pickMatch[1]) pickUpPoint = pickMatch[1].trim().replace(/\s+/g, ' ');
+
+                const dropMatch = block.match(/Drop-off point:\s*([^\n]+?)(?=\s+(?:Drop-off time|Pick-up time|Transportation|Reservation|Flight|$))/i);
+                if (dropMatch && dropMatch[1]) dropOffPoint = dropMatch[1].trim().replace(/\s+/g, ' ');
+
+                if (/Four Seasons|FS Lobby/i.test(pickUpPoint)) pickUpPoint = "Four Seasons Lobby";
+                if (/Four Seasons|FS Lobby/i.test(dropOffPoint)) dropOffPoint = "Four Seasons Lobby";
+
+                if (!pickUpPoint) pickUpPoint = isArrival ? "SJD International Airport T2" : "Four Seasons Lobby";
+                if (!dropOffPoint) dropOffPoint = isArrival ? "Four Seasons Lobby" : "SJD International Airport T2";
+
+                let vehicleShort = "Suburban";
+                if (/SPRINTER/i.test(block) || /Sprinter/i.test(block)) vehicleShort = "Sprinter";
+                else if (/SUV/i.test(block) || /Suburban/i.test(block)) vehicleShort = "Suburban";
+
+                let transportation = `Transcabo Beach House, One ${vehicleShort}`;
+                if (/Own/i.test(block)) {
+                    transportation = "Own Transportation";
+                    vehicleShort = "Own Trans.";
+                }
+
+                const item = {
+                    type: isArrival ? 'ARRIVAL' : 'DEPARTURE',
+                    name: name, pax: pax, time: time, minutes: minutesValue,
+                    origin: pickUpPoint, destination: dropOffPoint,
+                    transportation: transportation, vehicle: vehicleShort
+                };
+
+                if (!items.some(existing => existing.name === item.name && existing.time === item.time)) {
+                    items.push(item);
+                }
+            });
+
+            items.sort((a, b) => a.minutes - b.minutes);
+            renderPDFResults(items);
+        }
+
+        function convertTimeToMinutes(timeStr) {
+            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (!match) return 9999;
+            let hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            const modifier = match[3].toUpperCase();
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return hours * 60 + minutes;
+        }
+
+        function renderPDFResults(items) {
+            const container = document.getElementById('mainOutput');
+            document.getElementById('statTotal').innerText = items.length;
+            document.getElementById('statArrivals').innerText = items.filter(i => i.type === 'ARRIVAL').length;
+            document.getElementById('statDepartures').innerText = items.filter(i => i.type === 'DEPARTURE').length;
+
+            container.innerHTML = items.length === 0 ? 
+                '<p class="text-slate-500 text-xs italic text-center py-12">No se encontraron movimientos registrados.</p>' : '';
+
+            items.forEach((item, idx) => { container.appendChild(createExecutiveCard(item, idx)); });
+        }
+
+        function generateWhatsAppBlock(item) {
+            const isArr = item.type === 'ARRIVAL';
+            return `*${item.name}* leaving *${item.origin}* on way to *${item.destination}*
+> *${isArr ? 'ETA' : 'ETD'}:* ${item.time}
+> *Transportation / Driver:* ${item.transportation}
+> *Pax:* ${item.pax}`;
+        }
+
+        function createExecutiveCard(item, idx) {
+            const div = document.createElement('div');
+            const isArrival = item.type === 'ARRIVAL';
+            const fullWhatsAppText = generateWhatsAppBlock(item);
+            div.className = `executive-card relative overflow-hidden bg-[#1c2541] border border-slate-800 border-l-4 ${isArrival ? 'border-l-emerald-500' : 'border-l-sky-400'} rounded-2xl p-4 flex flex-col gap-3 shadow-lg transition-all duration-300`;
+            const badgeColor = isArrival ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+            const vehicleBadge = item.vehicle === 'Sprinter' ? '🚐 Sprinter' : (item.vehicle === 'Suburban' ? '🚙 Suburban' : '🚗 Own');
+
+            div.innerHTML = `
+                <div class="watermark-stamp absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-all opacity-0 scale-95 z-20">
+                  <span class="bg-slate-950/85 text-amber-400 border-2 border-amber-500/40 px-6 py-2 rounded-2xl font-black text-2xl tracking-widest uppercase shadow-2xl rotate-[-8deg]">✨ CONCLUIDO ✨</span>
+                </div>
+                <div class="flex items-center justify-between gap-1 z-10">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[9px] px-2 py-0.5 rounded border font-mono font-bold uppercase ${badgeColor} whitespace-nowrap">${isArrival ? 'ARRIVAL' : 'DEPARTURE'}</span>
+                    <span class="text-[9px] px-2 py-0.5 rounded border border-slate-800 bg-[#0b132b] text-slate-300 font-mono font-semibold whitespace-nowrap">${vehicleBadge}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 whitespace-nowrap">
+                    <span class="text-[11px] font-mono text-slate-200 font-semibold bg-[#0b132b] px-2 py-0.5 rounded border border-slate-800">${isArrival ? 'ETA' : 'ETD'}: ${item.time}</span>
+                    <span class="text-[10px] font-mono text-slate-300 bg-[#0b132b] px-2 py-0.5 rounded border border-slate-800">👤 ${item.pax} Pax</span>
+                  </div>
+                </div>
+                <div class="z-10">
+                  <h3 class="text-sm font-bold text-slate-100 tracking-wide">${item.name}</h3>
+                  <p class="text-xs text-slate-400 flex flex-wrap items-center gap-1 mt-1">
+                    <span class="text-slate-500">Ruta:</span> <span class="text-slate-300 font-medium">${item.origin}</span> <span class="text-blue-400">➔</span> <span class="text-slate-300 font-medium">${item.destination}</span>
+                  </p>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80 z-10">
+                  <button onclick="toggleCompletedCard(this)" class="flex-1 sm:flex-none text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2.5 rounded-xl transition font-medium border border-slate-700 flex items-center justify-center gap-1.5"><span>⌛ EN ESPERA</span></button>
+                  <button onclick="copySingleBlock(this, \`${escapeJs(fullWhatsAppText)}\`)" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition font-bold shadow-md shadow-blue-600/20">📋 Copiar Bloque</button>
+                </div>
+            `;
+            return div;
+        }
+
+        function toggleCompletedCard(btnElement) {
+            const card = btnElement.closest('.executive-card');
+            const watermark = card.querySelector('.watermark-stamp');
+            const isCompleted = card.classList.toggle('opacity-40');
+            card.classList.toggle('grayscale');
+            if (isCompleted) {
+                watermark.classList.remove('opacity-0', 'scale-95');
+                watermark.classList.add('opacity-100', 'scale-100');
+                btnElement.innerHTML = "<span>✅ FINALIZADO</span>";
+                btnElement.className = "flex-1 sm:flex-none text-xs bg-slate-800 text-amber-400 px-3.5 py-2.5 rounded-xl transition font-medium border border-amber-500/30 flex items-center justify-center gap-1.5";
+            } else {
+                watermark.classList.remove('opacity-100', 'scale-100');
+                watermark.classList.add('opacity-0', 'scale-95');
+                btnElement.innerHTML = "<span>⌛ EN ESPERA</span>";
+                btnElement.className = "flex-1 sm:flex-none text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2.5 rounded-xl transition font-medium border border-slate-700 flex items-center justify-center gap-1.5";
+            }
+        }
+
+        function copySingleBlock(btnElement, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btnElement.innerHTML;
+                btnElement.innerHTML = "✅ ¡Copiado!";
+                btnElement.classList.remove('bg-blue-600', 'hover:bg-blue-500', 'text-white');
+                btnElement.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
+                setTimeout(() => {
+                    btnElement.innerHTML = originalText;
+                    btnElement.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
+                    btnElement.classList.add('bg-blue-600', 'hover:bg-blue-500', 'text-white');
+                }, 1500);
+            });
+        }
+
+        function escapeJs(str) { return str.replace(/`/g, '\\`').replace(/\$/g, '\\$'); }
+
+        // --- DATOS DE SECTORES ---
         const CostaPalmasData = {
             'sec-1': {
-                name: "Sector 1 — Infraestructura y Servicios",
-                subtitle: "Área de Servicios Generales, Mantenimiento y Planta",
-                badge: "SECTOR 1 (VERDE)",
-                badgeClass: "bg-emerald-500 text-slate-950",
+                name: "Sector 1 — Infraestructura y Servicios", subtitle: "Área de Servicios Generales, Mantenimiento y Planta",
+                badge: "SECTOR 1 (VERDE)", badgeClass: "bg-emerald-500 text-slate-950",
                 accesos: [
                     { num: 1, desc: "Acceso 1: Caseta de Entrada Principal / Control General." },
                     { num: 2, desc: "Acceso 2: Filtro Secundario e Ingreso a Áreas Operativas." },
@@ -1012,10 +1323,8 @@
                 ]
             },
             'sec-2': {
-                name: "Sector 2 — Marina Villas & Yacht Club",
-                subtitle: "Residencias de Marina y Zona Náutica Exclusiva",
-                badge: "SECTOR 2 (AZUL)",
-                badgeClass: "bg-blue-500 text-white",
+                name: "Sector 2 — Marina Villas & Yacht Club", subtitle: "Residencias de Marina y Zona Náutica Exclusiva",
+                badge: "SECTOR 2 (AZUL)", badgeClass: "bg-blue-500 text-white",
                 accesos: [
                     { num: 5, desc: "Acceso 5: Entrada Norte a Zona Marina Villas." },
                     { num: 6, desc: "Acceso 6: Acceso a Docks y Muelles Principales." }
@@ -1028,10 +1337,8 @@
                 ]
             },
             'sec-3': {
-                name: "Sector 3 — Marina, Mozza & Casa Blake",
-                subtitle: "Centro Urbano, Gastronomía y Club Náutico",
-                badge: "SECTOR 3 (AMARILLO)",
-                badgeClass: "bg-yellow-500 text-slate-950",
+                name: "Sector 3 — Marina, Mozza & Casa Blake", subtitle: "Centro Urbano, Gastronomía y Club Náutico",
+                badge: "SECTOR 3 (AMARILLO)", badgeClass: "bg-yellow-500 text-slate-950",
                 accesos: [
                     { num: 7, desc: "Acceso 7: Punto de Control Casa Blake & Centro Comercial." },
                     { num: 8, desc: "Acceso 8: Ingreso a Restaurante Mozza / Docks Turísticos." }
@@ -1044,13 +1351,9 @@
                 ]
             },
             'sec-4': {
-                name: "Sector 4 — Four Seasons Resort & Residences",
-                subtitle: "Zona Hotelera, Golf y Residencias de Lujo",
-                badge: "SECTOR 4 (NARANJA)",
-                badgeClass: "bg-orange-500 text-slate-950",
-                accesos: [
-                    { num: 9, desc: "Acceso 9: Acceso Principal al Lobby y Vialidad Copa de Oro." }
-                ],
+                name: "Sector 4 — Four Seasons Resort & Residences", subtitle: "Zona Hotelera, Golf y Residencias de Lujo",
+                badge: "SECTOR 4 (NARANJA)", badgeClass: "bg-orange-500 text-slate-950",
+                accesos: [{ num: 9, desc: "Acceso 9: Acceso Principal al Lobby y Vialidad Copa de Oro." }],
                 infrastructure: [
                     { title: "Jimmy's & Bouchies (Outlets)", desc: "Cafetería y puntos gastronómicos exclusivos." },
                     { title: "The Beach House Pavilion (Outlet)", desc: "Centro de playa y amenidades principales." },
@@ -1060,10 +1363,8 @@
                 ]
             },
             'sec-aman': {
-                name: "Sector Amán — Amanvari Resort & Residences",
-                subtitle: "Zona Hotelera y Desarrollo Amanvari",
-                badge: "ZONA AMÁN (PÚRPURA)",
-                badgeClass: "bg-purple-500 text-white",
+                name: "Sector Amán — Amanvari Resort & Residences", subtitle: "Zona Hotelera y Desarrollo Amanvari",
+                badge: "ZONA AMÁN (PÚRPURA)", badgeClass: "bg-purple-500 text-white",
                 accesos: [
                     { num: 10, desc: "Acceso 10: Ingreso a Obras y Módulo de Control Amanvari." },
                     { num: 11, desc: "Acceso 11: Acceso Poniente de Servicios Aman." }
@@ -1093,7 +1394,6 @@
             currentActiveSec = secId;
             const data = CostaPalmasData[secId];
             if (!data) return;
-
             document.querySelectorAll('.sector-polygon').forEach(p => p.classList.remove('active'));
             const poly = document.getElementById(`poly-${secId}`);
             if (poly) poly.classList.add('active');
@@ -1102,7 +1402,6 @@
             document.getElementById('sheetBadge').className = `text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded inline-block ${data.badgeClass}`;
             document.getElementById('sheetTitle').textContent = data.name;
             document.getElementById('sheetSubtitle').textContent = data.subtitle;
-
             switchSectorTab('general');
             openBottomSheet();
         }
@@ -1116,18 +1415,14 @@
 
         function switchSectorTab(tabName) {
             activeSectorTab = tabName;
-            
             ['general', 'infrastructure', 'access'].forEach(t => {
                 const btn = document.getElementById(`tabBtn-${t}`);
                 if (btn) {
-                    if (t === tabName) {
-                        btn.className = "tab-btn py-2 px-2 font-bold text-amber-400 bg-slate-800 rounded-xl text-center shadow transition";
-                    } else {
-                        btn.className = "tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition";
-                    }
+                    btn.className = (t === tabName) ? 
+                        "tab-btn py-2 px-2 font-bold text-amber-400 bg-slate-800 rounded-xl text-center shadow transition" : 
+                        "tab-btn py-2 px-2 font-medium text-slate-300 bg-slate-800/40 rounded-xl text-center shadow transition";
                 }
             });
-
             renderSectorTabContent();
         }
 
@@ -1138,28 +1433,17 @@
 
             if (activeSectorTab === 'general') {
                 container.innerHTML = `
-                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-700/70">
-                        <h4 class="font-bold text-amber-400 text-xs mb-1">Información General</h4>
-                        <p class="text-slate-300 text-xs leading-relaxed">${data.subtitle}</p>
-                    </div>
-                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-700/70">
-                        <h4 class="font-bold text-amber-400 text-xs mb-1">Accesos Asignados</h4>
-                        <p class="text-slate-300 text-xs">Este sector cuenta con ${data.accesos.length} puntos de control registrados.</p>
-                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-700/70"><h4 class="font-bold text-amber-400 text-xs mb-1">Información General</h4><p class="text-slate-300 text-xs leading-relaxed">${data.subtitle}</p></div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-700/70"><h4 class="font-bold text-amber-400 text-xs mb-1">Accesos Asignados</h4><p class="text-slate-300 text-xs">Este sector cuenta con ${data.accesos.length} puntos de control registrados.</p></div>
                 `;
             } else if (activeSectorTab === 'infrastructure') {
                 container.innerHTML = data.infrastructure.map(item => `
-                    <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/70">
-                        <h5 class="font-bold text-amber-400 text-xs">${item.title}</h5>
-                        <p class="text-slate-300 text-[11px] mt-0.5">${item.desc}</p>
-                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/70"><h5 class="font-bold text-amber-400 text-xs">${item.title}</h5><p class="text-slate-300 text-[11px] mt-0.5">${item.desc}</p></div>
                 `).join('');
             } else if (activeSectorTab === 'access') {
                 container.innerHTML = data.accesos.map(acc => `
                     <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-xs shrink-0 border border-amber-500/30">
-                            <i class="fa-solid fa-shield-halved text-[10px]"></i>
-                        </div>
+                        <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-xs shrink-0 border border-amber-500/30"><i class="fa-solid fa-shield-halved text-[10px]"></i></div>
                         <p class="text-slate-300 text-[11px]">${acc.desc}</p>
                     </div>
                 `).join('');
@@ -1183,16 +1467,12 @@
             const data = CostaPalmasData[currentActiveSec];
             let text = `${data.name}\n${data.subtitle}\n\nInfraestructura:\n`;
             data.infrastructure.forEach(i => text += `- ${i.title}: ${i.desc}\n`);
-
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("Información copiada al portapapeles");
-            });
+            navigator.clipboard.writeText(text).then(() => showToast("Información copiada al portapapeles"));
         }
 
         function openModal(member) {
             const modal = document.getElementById('detailModal');
             if(!modal) return;
-
             document.getElementById('modalImg').src = member.photo;
             document.getElementById('modalName').innerText = member.name;
             document.getElementById('modalVilla').innerText = "Villa: " + member.villa + " | Origen: " + member.origin;
@@ -1203,10 +1483,7 @@
             document.getElementById('modalPhone').innerText = member.phone;
             
             document.getElementById('goToMapBtn').onclick = () => focusOnMember(member.id);
-            document.getElementById('goToGpsBtn').onclick = () => {
-                window.open(`https://www.google.com/maps/search/?api=1&query=${member.lat},${member.lng}`, '_blank');
-            };
-
+            document.getElementById('goToGpsBtn').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${member.lat},${member.lng}`, '_blank');
             modal.classList.remove('hidden');
         }
 
@@ -1216,110 +1493,24 @@
         }
 
         function copyResidentDetails() {
-            const name = document.getElementById('modalName').innerText;
-            const villa = document.getElementById('modalVilla').innerText;
-            const opera = document.getElementById('modalOpera').innerText;
-            const transport = document.getElementById('modalTransport').innerText;
-            const bellman = document.getElementById('modalBellman').innerText;
-            const phone = document.getElementById('modalPhone').innerText;
-
-            const reportText = `[COSTA PALMAS — OPERACIÓN]\nResidente: ${name}\n${villa} | Folio Opera: ${opera}\nTransporte: ${transport}\nNotas Bellman: ${bellman}\nTel: ${phone}`;
-
-            navigator.clipboard.writeText(reportText).then(() => {
-                showToast("¡Datos copiados para WhatsApp!");
-            });
+            const reportText = `[COSTA PALMAS — OPERACIÓN]\nResidente: ${document.getElementById('modalName').innerText}\n${document.getElementById('modalVilla').innerText} | Folio Opera: ${document.getElementById('modalOpera').innerText}\nTransporte: ${document.getElementById('modalTransport').innerText}\nNotas Bellman: ${document.getElementById('modalBellman').innerText}\nTel: ${document.getElementById('modalPhone').innerText}`;
+            navigator.clipboard.writeText(reportText).then(() => showToast("¡Datos copiados para WhatsApp!"));
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toastMsg').textContent = msg;
             toast.classList.remove('-translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('-translate-y-20', 'opacity-0');
-            }, 2500);
+            setTimeout(() => toast.classList.add('-translate-y-20', 'opacity-0'), 2500);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            checkSession();
-        });
+        document.addEventListener('DOMContentLoaded', () => { checkSession(); });
     </script>
 </body>
 </html>
 
   <script>
-    async function handleAuth() {
-    const userInput = document.getElementById('auth-user').value.trim().toLowerCase();
-    const passInput = document.getElementById('auth-pass').value.trim();
-    const authBtn = document.getElementById('auth-btn');
-
-    if (!userInput || !passInput) {
-        alert('Por favor, ingresa tu usuario y contraseña.');
-        return;
-    }
-
-    authBtn.innerText = "Verificando acceso...";
-    authBtn.disabled = true;
-
-    // Respaldo local con todos tus operadores autorizados (Garantiza acceso instantáneo en celular)
-    const localUsers = {
-        "xasharitl": "123456",
-        "francisco": "123456",
-        "esteban": "123456",
-        "fernando": "123456",
-        "ignacio": "123456",
-        "mozza": "123456",
-        "delphine": "123456",
-        "danielc": "123456",
-        "juanc": "123456",
-        "josel": "123456",
-        "ulises": "123456",
-        "diego": "123456",
-        "dorman": "123456"
-    };
-
-    // Validación local directa (Evita el bloqueo CORS en dispositivos móviles)
-    if (localUsers[userInput] && localUsers[userInput] === passInput) {
-        localStorage.setItem('cp_logged_user', userInput);
-        checkSession();
-        return;
-    }
-
-    // Si por alguna razón se usa un usuario nuevo, intenta consultar el Excel
-    try {
-        const resOrigin = await fetch(SHEET_ORIGIN_URL);
-        if (!resOrigin.ok) throw new Error("Error de red");
-        
-        const textOrigin = await resOrigin.text();
-        const lines = textOrigin.split("\n");
-        let authenticated = false;
-
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const cols = parseCSVLine(lines[i]);
-            const excelUser = (cols[0] || "").trim().toLowerCase();
-            const excelPass = (cols[1] || "").trim();
-
-            if (excelUser === userInput && excelPass === passInput) {
-                authenticated = true;
-                break;
-            }
-        }
-
-        if (authenticated) {
-            localStorage.setItem('cp_logged_user', userInput);
-            checkSession();
-        } else {
-            alert('Usuario o contraseña incorrectos.');
-            authBtn.innerText = "Iniciar Sesión";
-            authBtn.disabled = false;
-        }
-    } catch (error) {
-        console.warn("Fallo de red o CORS con la nube:", error);
-        alert('⚠️ Usuario o contraseña incorrectos, o error de conexión con la nube.');
-        authBtn.innerText = "Iniciar Sesión";
-        authBtn.disabled = false;
-    }
-}
+    
   </script>
 </body>
 </html>
