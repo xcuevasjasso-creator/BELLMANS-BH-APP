@@ -1236,6 +1236,7 @@ async function processPDF() {
 
 function parseReservationsReport(text) {
     const items = [];
+    // Partición estricta de bloques por cabecera de aeropuertos para que no se mezclen
     const blocks = text.split(/(?=(?:SJD Airport|FBO Private Airport|CSL Airport|FBO MMSL|FBO MMSD)\s*[-–]?\s*(?:Departure|Arrival)|(?:SJD Airport|FBO Private Airport|CSL Airport|FBO MMSL|FBO MMSD)\s+Arrival)/gi);
 
     blocks.forEach((block, index) => {
@@ -1255,21 +1256,19 @@ function parseReservationsReport(text) {
             resNo = resMatch[1].trim();
         }
 
+        // Extracción estricta y limpia del nombre del bloque actual
         let name = "";
-        const nameMatch = block.match(/Name:\s*([A-Za-z\s&]+?)(?=\s+Number of Guest|$)/i) ||
-                          block.match(/Player\s*1:\s*[A-Z0-9\-]+\s*[-–]\s*(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Za-z\s&]+)/i);
-        
-        if (nameMatch && nameMatch[1]) {
-            name = nameMatch[1].trim().replace(/\s+/g, ' ');
+        const playerMatch = block.match(/Player\s*1:\s*[A-Z0-9\-]+\s*[-–]\s*(?:Mr\.|Ms\.|Mrs\.|Dr\.|Ms)?\s*([A-Za-z\s&]+?)(?=\s+(?:Beach|Employee|Guests|SJD|Rate|Reserved|$))/i);
+        const nameLabelMatch = block.match(/Name:\s*([A-Za-z\s&,]+?)(?=\s+(?:Number of Guest|Flight|Pick-up|Drop-off|$))/i);
+
+        if (playerMatch && playerMatch[1]) {
+            name = playerMatch[1].trim().replace(/\s+/g, ' ');
+        } else if (nameLabelMatch && nameLabelMatch[1]) {
+            name = nameLabelMatch[1].trim().replace(/\s+/g, ' ');
         }
 
         if (!name || name.length < 3) {
-            const fallbackMatch = block.match(/(?:Gareth Hamilton|David Blitzer|Judith Meaney|Andrea Gutierrez|Jono Friedland|Eugenia Aldape|Brandon)/i);
-            if (fallbackMatch) {
-                name = fallbackMatch[0] + " Guests SJD Airport";
-            } else {
-                name = "Huésped / Pasajero (Ref: #" + resNo + ")";
-            }
+            name = "Huésped / Pasajero (Ref: #" + resNo + ")";
         }
 
         let pax = "1";
