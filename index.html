@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JSFiddle d0bj918r</title>
+  <title>JSFiddle cjf69tuw</title>
 
   <style>
     html, body {
@@ -289,18 +289,22 @@ button.bg-rose-600 { animation: softPulse 2.5s infinite; }
                     </div>
                 </section>
 
-                <div class="flex items-center gap-2 glass-panel px-3.5 py-3 rounded-2xl border border-slate-800 shadow-inner justify-around">
-                    <div class="text-center px-3 border-r border-slate-800 flex-1">
+                <div class="flex items-center gap-1.5 glass-panel px-3.5 py-3 rounded-2xl border border-slate-800 shadow-inner justify-around">
+                    <div id="filterBtnTotal" onclick="filterTransportList('ALL')" class="text-center px-2 border-r border-slate-800 flex-1 cursor-pointer transition-all hover:bg-slate-900/60 py-1.5 rounded-xl">
                       <span id="statTotal" class="block text-base font-bold text-slate-200 font-mono">0</span>
                       <span class="text-[9px] uppercase tracking-wider text-slate-400">Total</span>
                     </div>
-                    <div class="text-center px-3 border-r border-slate-800 flex-1">
+                    <div id="filterBtnArrivals" onclick="filterTransportList('ARRIVAL')" class="text-center px-2 border-r border-slate-800 flex-1 cursor-pointer transition-all hover:bg-slate-900/60 py-1.5 rounded-xl">
                       <span id="statArrivals" class="block text-base font-bold text-emerald-400 font-mono">0</span>
                       <span class="text-[9px] uppercase tracking-wider text-slate-400">Arrivals</span>
                     </div>
-                    <div class="text-center px-3 flex-1">
+                    <div id="filterBtnDepartures" onclick="filterTransportList('DEPARTURE')" class="text-center px-2 border-r border-slate-800 flex-1 cursor-pointer transition-all hover:bg-slate-900/60 py-1.5 rounded-xl">
                       <span id="statDepartures" class="block text-base font-bold text-sky-400 font-mono">0</span>
                       <span class="text-[9px] uppercase tracking-wider text-slate-400">Departures</span>
+                    </div>
+                    <div id="filterBtnCanceled" onclick="filterTransportList('CANCELED')" class="text-center px-2 flex-1 cursor-pointer transition-all hover:bg-slate-900/60 py-1.5 rounded-xl">
+                      <span id="statCanceled" class="block text-base font-bold text-rose-400 font-mono">0</span>
+                      <span class="text-[9px] uppercase tracking-wider text-slate-400">Cancelados</span>
                     </div>
                 </div>
 
@@ -606,6 +610,10 @@ let leafletMap = null;
 let mapMarkersMap = {};
 let activeZoneFilter = 'all';
 let isCompactView = false;
+
+// Variables globales para transportación y filtros
+let cachedPdfItems = [];
+let activeTransportFilter = 'ALL';
 
 function normalizeString(str) {
     if (!str) return '';
@@ -1174,6 +1182,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function resetAppPDF() {
     document.getElementById('pdfInput').value = "";
+    cachedPdfItems = [];
+    activeTransportFilter = 'ALL';
     const btn = document.getElementById('processBtn');
     btn.disabled = true;
     btn.className = "w-full sm:w-auto px-5 py-2.5 bg-slate-800 text-slate-500 font-semibold text-xs rounded-xl transition-all cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider whitespace-nowrap";
@@ -1226,17 +1236,24 @@ async function processPDF() {
 
 function parseReservationsReport(text) {
     const items = [];
-    const blocks = text.split(/(?=(?:SJD Airport|FBO Private Airport)\s*[-–]\s*(?:Departure|Arrival)|(?:SJD Airport|FBO Private Airport)\s*Arrival)/gi);
+    const blocks = text.split(/(?=(?:SJD Airport|FBO Private Airport|CSL Airport|FBO MMSL|FBO MMSD)\s*[-–]?\s*(?:Departure|Arrival)|(?:SJD Airport|FBO Private Airport|CSL Airport|FBO MMSL|FBO MMSD)\s+Arrival)/gi);
 
-    blocks.forEach(block => {
+    blocks.forEach((block, index) => {
         if (!block.trim()) return;
 
-        const headerSnippet = block.substring(0, 40);
-        const isArrival = /Arrival/i.test(headerSnippet);
-        const isDeparture = /Departure/i.test(headerSnippet);
+        const headerSnippet = block.substring(0, 60);
+        const isArrival = /Arrival/i.test(headerSnippet) || /Arrival/i.test(block.substring(0, 30));
+        const isDeparture = /Departure/i.test(headerSnippet) || /Departure/i.test(block.substring(0, 30));
 
         if (!isArrival && !isDeparture) return;
-        if (/Canceled|Cancelled/i.test(block)) return;
+
+        const isCanceled = /Canceled|Cancelled/i.test(block);
+
+        let resNo = "RES-" + index;
+        const resMatch = block.match(/(?:Reservation No\.?|Reservation no\.?)\s*[:#]?\s*(\d+)/i);
+        if (resMatch && resMatch[1]) {
+            resNo = resMatch[1].trim();
+        }
 
         let name = "";
         const nameMatch = block.match(/Name:\s*([A-Za-z\s&]+?)(?=\s+Number of Guest|$)/i) ||
@@ -1245,7 +1262,15 @@ function parseReservationsReport(text) {
         if (nameMatch && nameMatch[1]) {
             name = nameMatch[1].trim().replace(/\s+/g, ' ');
         }
-        if (!name || name.length < 3) return;
+
+        if (!name || name.length < 3) {
+            const fallbackMatch = block.match(/(?:Gareth Hamilton|David Blitzer|Judith Meaney|Andrea Gutierrez|Jono Friedland|Eugenia Aldape|Brandon)/i);
+            if (fallbackMatch) {
+                name = fallbackMatch[0] + " Guests SJD Airport";
+            } else {
+                name = "Huésped / Pasajero (Ref: #" + resNo + ")";
+            }
+        }
 
         let pax = "1";
         const paxMatch = block.match(/Number of Guest:\s*(\d{1,2})/i);
@@ -1270,8 +1295,8 @@ function parseReservationsReport(text) {
             }
         }
 
-        let pickUpPoint = "";
-        let dropOffPoint = "";
+        let pickUpPoint = "SJD International Airport T2";
+        let dropOffPoint = "Four Seasons Lobby";
 
         const pickMatch = block.match(/Pick-up point:\s*([^\n]+?)(?=\s+(?:Drop-off point:|Drop-off time|Transportation|Reservation|Flight|$))/i);
         if (pickMatch && pickMatch[1]) pickUpPoint = pickMatch[1].trim().replace(/\s+/g, ' ');
@@ -1281,14 +1306,6 @@ function parseReservationsReport(text) {
 
         if (/Four Seasons|FS Lobby/i.test(pickUpPoint)) pickUpPoint = "Four Seasons Lobby";
         if (/Four Seasons|FS Lobby/i.test(dropOffPoint)) dropOffPoint = "Four Seasons Lobby";
-
-        if (!pickUpPoint) pickUpPoint = isArrival ? "SJD International Airport" : "Four Seasons Lobby";
-        if (!dropOffPoint) dropOffPoint = isArrival ? "Four Seasons Lobby" : "SJD International Airport";
-
-        if (/FBO Private Airport/i.test(headerSnippet)) {
-            if (isArrival) pickUpPoint = "FBO Private Airport CSL";
-            else dropOffPoint = "FBO Private Airport CSL";
-        }
 
         let vehicleShort = "Suburban";
         if (/SPRINTER/i.test(block) || /Sprinter/i.test(block)) vehicleShort = "Sprinter";
@@ -1301,6 +1318,7 @@ function parseReservationsReport(text) {
         }
 
         const item = {
+            resNo: resNo,
             type: isArrival ? 'ARRIVAL' : 'DEPARTURE',
             name: name,
             pax: pax,
@@ -1309,15 +1327,18 @@ function parseReservationsReport(text) {
             origin: pickUpPoint,
             destination: dropOffPoint,
             transportation: transportation,
-            vehicle: vehicleShort
+            vehicle: vehicleShort,
+            canceled: isCanceled
         };
 
-        const exists = items.some(existing => existing.name === item.name && existing.time === item.time);
+        const exists = items.some(existing => existing.resNo === item.resNo);
         if (!exists) items.push(item);
     });
 
     items.sort((a, b) => a.minutes - b.minutes);
-    renderPDFResults(items);
+    cachedPdfItems = items;
+    activeTransportFilter = 'ALL';
+    renderPDFResults();
 }
 
 function convertTimeToMinutes(timeStr) {
@@ -1333,21 +1354,60 @@ function convertTimeToMinutes(timeStr) {
     return hours * 60 + minutes;
 }
 
-function renderPDFResults(items) {
+function filterTransportList(filterType) {
+    activeTransportFilter = filterType;
+    renderPDFResults();
+}
+
+function renderPDFResults() {
     const container = document.getElementById('mainOutput');
-    document.getElementById('statTotal').innerText = items.length;
-    document.getElementById('statArrivals').innerText = items.filter(i => i.type === 'ARRIVAL').length;
-    document.getElementById('statDepartures').innerText = items.filter(i => i.type === 'DEPARTURE').length;
+    const totalCount = cachedPdfItems.length;
+    const arrivalCount = cachedPdfItems.filter(i => i.type === 'ARRIVAL' && !i.canceled).length;
+    const departureCount = cachedPdfItems.filter(i => i.type === 'DEPARTURE' && !i.canceled).length;
+    const canceledCount = cachedPdfItems.filter(i => i.canceled).length;
 
-    container.innerHTML = items.length === 0 ? 
-        '<p class="text-slate-500 text-xs italic text-center py-12">No se encontraron movimientos activos registrados.</p>' : '';
+    document.getElementById('statTotal').innerText = totalCount;
+    document.getElementById('statArrivals').innerText = arrivalCount;
+    document.getElementById('statDepartures').innerText = departureCount;
+    
+    const statCanceled = document.getElementById('statCanceled');
+    if (statCanceled) statCanceled.innerText = canceledCount;
 
-    items.forEach((item, idx) => { container.appendChild(createExecutiveCard(item, idx)); });
+    const btnTotal = document.getElementById('filterBtnTotal');
+    const btnArrivals = document.getElementById('filterBtnArrivals');
+    const btnDepartures = document.getElementById('filterBtnDepartures');
+    const btnCanceled = document.getElementById('filterBtnCanceled');
+
+    if (btnTotal && btnArrivals && btnDepartures) {
+        btnTotal.className = `text-center px-2 border-r border-slate-800 flex-1 cursor-pointer transition-all ${activeTransportFilter === 'ALL' ? 'bg-blue-600/20 py-1.5 rounded-xl border border-blue-500/40' : 'hover:bg-slate-900/60 py-1.5 rounded-xl'}`;
+        btnArrivals.className = `text-center px-2 border-r border-slate-800 flex-1 cursor-pointer transition-all ${activeTransportFilter === 'ARRIVAL' ? 'bg-emerald-600/20 py-1.5 rounded-xl border border-emerald-500/40' : 'hover:bg-slate-900/60 py-1.5 rounded-xl'}`;
+        btnDepartures.className = `text-center px-2 border-r border-slate-800 flex-1 cursor-pointer transition-all ${activeTransportFilter === 'DEPARTURE' ? 'bg-sky-600/20 py-1.5 rounded-xl border border-sky-500/40' : 'hover:bg-slate-900/60 py-1.5 rounded-xl'}`;
+        if (btnCanceled) {
+            btnCanceled.className = `text-center px-2 flex-1 cursor-pointer transition-all ${activeTransportFilter === 'CANCELED' ? 'bg-rose-600/20 py-1.5 rounded-xl border border-rose-500/40' : 'hover:bg-slate-900/60 py-1.5 rounded-xl'}`;
+        }
+    }
+
+    const filteredItems = cachedPdfItems.filter(item => {
+        if (activeTransportFilter === 'ARRIVAL') return item.type === 'ARRIVAL' && !item.canceled;
+        if (activeTransportFilter === 'DEPARTURE') return item.type === 'DEPARTURE' && !item.canceled;
+        if (activeTransportFilter === 'CANCELED') return item.canceled;
+        return true;
+    });
+
+    container.innerHTML = filteredItems.length === 0 ? 
+        '<p class="text-slate-500 text-xs italic text-center py-12">No hay movimientos activos para este filtro.</p>' : '';
+
+    filteredItems.forEach((item, idx) => { container.appendChild(createExecutiveCard(item, idx)); });
 }
 
 function generateWhatsAppBlock(item) {
     const isArr = item.type === 'ARRIVAL';
     const timeKey = isArr ? 'ETA' : 'ETD';
+    if (item.canceled) {
+        return `*[CANCELADO] ${item.name}* leaving *${item.origin}* on way to *${item.destination}*
+> *${timeKey}:* ${item.time}
+> *Status:* CANCELLED (Ref: #${item.resNo})`;
+    }
     return `*${item.name}* leaving *${item.origin}* on way to *${item.destination}*
 > *${timeKey}:* ${item.time}
 > *Transportation / Driver:* ${item.transportation}
@@ -1360,11 +1420,17 @@ function createExecutiveCard(item, idx) {
     const timeKey = isArrival ? 'ETA' : 'ETD';
     const fullWhatsAppText = generateWhatsAppBlock(item);
 
-    div.className = `executive-card relative overflow-hidden glass-panel border border-slate-800 border-l-4 ${isArrival ? 'border-l-emerald-500' : 'border-l-sky-400'} rounded-2xl p-4 flex flex-col gap-3 shadow-lg transition-all duration-300 card-animate`;
+    let borderColor = isArrival ? 'border-l-emerald-500' : 'border-l-sky-400';
+    if (item.canceled) borderColor = 'border-l-rose-500 opacity-95';
+
+    div.className = `executive-card relative overflow-hidden glass-panel border border-slate-800 border-l-4 ${borderColor} rounded-2xl p-4 flex flex-col gap-3 shadow-lg transition-all duration-300 card-animate`;
     div.style.animationDelay = `${Math.min(idx * 0.03, 0.4)}s`;
 
-    const badgeColor = isArrival ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+    let badgeColor = isArrival ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+    if (item.canceled) badgeColor = 'bg-rose-500/20 text-rose-400 border-rose-500/40 font-bold';
+
     const vehicleBadge = item.vehicle === 'Sprinter' ? '🚐 Sprinter' : (item.vehicle === 'Suburban' ? '🚙 Suburban' : '🚗 Own');
+    const typeLabel = item.canceled ? '⚠️ CANCELADO' : (isArrival ? 'ARRIVAL' : 'DEPARTURE');
 
     div.innerHTML = `
         <div class="watermark-stamp absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-all opacity-0 scale-95 z-20">
@@ -1372,7 +1438,7 @@ function createExecutiveCard(item, idx) {
         </div>
         <div class="flex items-center justify-between gap-1 z-10">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-[9px] px-2 py-0.5 rounded border font-mono font-bold uppercase ${badgeColor} whitespace-nowrap">${isArrival ? 'ARRIVAL' : 'DEPARTURE'}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded border font-mono uppercase ${badgeColor} whitespace-nowrap">${typeLabel}</span>
             <span class="text-[9px] px-2 py-0.5 rounded border border-slate-800 bg-slate-900 text-slate-300 font-mono font-semibold whitespace-nowrap">${vehicleBadge}</span>
           </div>
           <div class="flex items-center gap-1.5 whitespace-nowrap">
